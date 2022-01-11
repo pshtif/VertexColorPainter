@@ -38,9 +38,24 @@ namespace VertexColorPainter
         static VertexColorPaintEditorCore()
         {
             CreateConfig();
-
+            
             SceneView.duringSceneGui -= OnSceneGUI;
             SceneView.duringSceneGui += OnSceneGUI;
+            
+            Undo.undoRedoPerformed -= UndoRedoCallback;
+            Undo.undoRedoPerformed += UndoRedoCallback;
+        }
+
+        static void UndoRedoCallback()
+        {
+            if (_paintedMesh == null || !Config.enabled)
+                return;
+
+            _paintedMesh.sharedMesh.colors = _paintedMesh.sharedMesh.colors;
+            _cachedColors = _paintedMesh.sharedMesh.colors;
+            
+            EditorUtility.SetDirty(_paintedMesh.sharedMesh);
+            SceneView.RepaintAll();
         }
 
         static void CreateConfig()
@@ -132,7 +147,7 @@ namespace VertexColorPainter
 
             GUIStyle style = new GUIStyle(GUI.skin.box);
             style.normal.background = Texture2D.whiteTexture; // must be white to tint properly
-            GUI.color = new Color(0, 0, 0, .7f);
+            GUI.color = new Color(0, 0, 0, .4f);
             GUI.Box(new Rect(0, rect.height - 30, rect.width, 30), "", style);
 
             GUILayout.BeginArea(new Rect(5, rect.height - 22, rect.width - 5, 20));
@@ -244,10 +259,20 @@ namespace VertexColorPainter
                 Handles.color = !Event.current.shift ? new Color(0, 1, 0, .2f) : new Color(1, 0, 0, .2f);
                 Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, Config.brushSize);
 
-                if (!Event.current.alt && (Event.current.type == EventType.MouseDrag ||
-                                           Event.current.type == EventType.MouseDown))
+                if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
+                {
+                    Undo.RegisterCompleteObjectUndo(_paintedMesh.sharedMesh, "Paint Color");
+                }
+                
+                if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
+                                                                        Event.current.type == EventType.MouseDown))
                 {
                     PaintVertices(_mouseRaycastHit);
+                }
+
+                if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseUp)
+                {
+                    EditorUtility.SetDirty(_paintedMesh);
                 }
             }
         }
@@ -310,6 +335,7 @@ namespace VertexColorPainter
 
         static void FillMeshColor(Color p_color, int p_submeshIndex)
         {
+            Undo.RegisterCompleteObjectUndo(_paintedMesh.sharedMesh, "Fill Color");
             Mesh mesh = _paintedMesh.sharedMesh;
 
             if (p_submeshIndex > -1)
@@ -327,6 +353,7 @@ namespace VertexColorPainter
             }
             
             mesh.colors = _cachedColors;
+            EditorUtility.SetDirty(_paintedMesh);
         }
     }
 }

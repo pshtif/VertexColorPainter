@@ -1,2 +1,2 @@
 # VertexColorPainter
-Tool for painting vertex color information on meshes in Unity
+Editor tool for painting vertex color information on meshes in Unity

@@ -11,9 +11,15 @@ namespace VertexColorPainter
     [InitializeOnLoad]
     public class VertexColorPaintEditorCore
     {
-        const string VERSION = "0.1.0";
+        const string VERSION = "0.1.2";
+
+        static private Material _vertexColorMaterial;
         
         static private GameObject _previousSelected;
+        static private Vector3 _previousSceneViewPivot;
+        static private Quaternion _previousSceneViewRotation;
+        static private float _previousSceneViewSize;
+        static private bool _usedFraming = false;
 
         static public VertexColorPainterEditorConfig Config { get; private set; }
 
@@ -31,6 +37,7 @@ namespace VertexColorPainter
         static private List<Color> _submeshColors;
         static private List<string> _submeshNames;
         static private int _selectedSubmesh = 0;
+        static private string[] _cachedBrushTypeNames;
 
         static private float _minBrushSize = 0;
         static private float _maxBrushSize = 1;
@@ -107,47 +114,77 @@ namespace VertexColorPainter
                 HandleMouseHit(p_sceneView);
             }
 
-            HandleBrush();
+            switch (Config.brushType)
+            {
+                case BrushType.PAINT:
+                    HandlePaintBrush();
+                    break;
+                case BrushType.FILL:
+                    HandleFillBrush();
+                    break;
+            }
         }
 
         private static void DrawGUI(SceneView p_sceneView)
         {
-            Handles.BeginGUI();
-
             if (_paintedMesh == null)
             {
                 if (Selection.activeGameObject?.GetComponent<MeshFilter>() != null)
                 {
-                    DrawEnablePaitingGUI(p_sceneView);
+                    DrawDisabledGUI(p_sceneView);
                 }
             }
             else
             {
-                DrawPaitingGUI(p_sceneView);
+                DrawEnabledGUI(p_sceneView);
             }
-
-            Handles.EndGUI();
         }
 
-        private static void DrawEnablePaitingGUI(SceneView p_sceneView)
+        private static void DrawDisabledGUI(SceneView p_sceneView)
         {
+            Handles.BeginGUI();
+            
             var rect = p_sceneView.camera.pixelRect;
             
             if (GUI.Button(new Rect(5, rect.height - 25, 120, 20), "Enable Paiting"))
             {
                 EnablePainting(Selection.activeGameObject.GetComponent<MeshFilter>());
             }
+            
+            Handles.EndGUI();
         }
 
-        private static void DrawPaitingGUI(SceneView p_sceneView)
+        private static void DrawEnabledGUI(SceneView p_sceneView)
         {
             var rect = p_sceneView.camera.pixelRect;
 
-            int space = 8;
-
             GUIStyle style = new GUIStyle(GUI.skin.box);
             style.normal.background = Texture2D.whiteTexture; // must be white to tint properly
-            GUI.color = new Color(0, 0, 0, .4f);
+            GUI.color = new Color(0, 0, 0, .45f);
+            
+            // Handles.BeginGUI();
+            //
+            // GUI.Box(rect, "", style);
+            //
+            // Handles.EndGUI();
+
+            // TODO move to a separate function
+            if (Config.meshIsolation)
+            {
+                if (_vertexColorMaterial == null)
+                {
+                    _vertexColorMaterial = new Material(Shader.Find("Hidden/VertexColorPainter/VertexColorShader"));
+                }
+
+                GL.Clear(true, true, Color.black);
+                _vertexColorMaterial.SetPass(0);
+                Graphics.DrawMeshNow(_paintedMesh.sharedMesh, _paintedMesh.transform.localToWorldMatrix);
+            }
+
+            Handles.BeginGUI();
+
+            int space = 8;
+            
             GUI.Box(new Rect(0, rect.height - 30, rect.width, 30), "", style);
 
             GUILayout.BeginArea(new Rect(5, rect.height - 22, rect.width - 5, 20));
@@ -164,24 +201,35 @@ namespace VertexColorPainter
 
             style = new GUIStyle("label");
             style.fontStyle = FontStyle.Bold;
+
+            if (_cachedBrushTypeNames == null)
+                _cachedBrushTypeNames = ((BrushType[])Enum.GetValues(typeof(BrushType))).Select(t => t.ToString()).ToArray();
+
+            GUILayout.Label("Brush Type: ", style, GUILayout.Width(80));
+            Config.brushType = (BrushType)EditorGUILayout.Popup((int)Config.brushType, _cachedBrushTypeNames, GUILayout.Width(120));
+            
+            GUILayout.Space(space);
             
             GUILayout.Label("Brush Color: ", style, GUILayout.Width(80));
             Config.brushColor = EditorGUILayout.ColorField(Config.brushColor, GUILayout.Width(60));
 
             GUILayout.Space(space);
-            //Config.container = (GameObject)EditorGUILayout.ObjectField(Config.container, typeof(GameObject), true, GUILayout.Width(200));
 
-            GUILayout.Label("Brush Size: ", style, GUILayout.Width(80));
-            Config.brushSize = EditorGUILayout.Slider(Config.brushSize, _minBrushSize, _maxBrushSize, GUILayout.Width(200));
-
-            GUILayout.Space(space);
-
-            if (GUILayout.Button("Fill Color", GUILayout.Width(100)))
+            if (Config.brushType == BrushType.PAINT)
             {
-                FillMeshColor(Config.brushColor, Config.lockToSubmesh ? _selectedSubmesh : -1);
+                GUILayout.Label("Brush Size: ", style, GUILayout.Width(80));
+                Config.brushSize =
+                    EditorGUILayout.Slider(Config.brushSize, _minBrushSize, _maxBrushSize, GUILayout.Width(200));
+
+                GUILayout.Space(space);
             }
 
-            if (_submeshColors.Count > 1)
+            // if (GUILayout.Button("Fill Color", GUILayout.Width(100)))
+            // {
+            //     FillMeshColor(Config.brushColor, Config.lockToSubmesh ? _selectedSubmesh : -1);
+            // }
+
+            if (_submeshColors.Count > 1 && Config.brushType != BrushType.FILL)
             {
                 GUILayout.Space(space);
 
@@ -202,8 +250,9 @@ namespace VertexColorPainter
             GUILayout.Label("VertexColorPainter v"+VERSION, style);
             GUILayout.EndHorizontal();
             GUILayout.EndArea();
+            
+            Handles.EndGUI();
         }
-
 
         public static void EnablePainting(MeshFilter p_meshFilter)
         {
@@ -217,19 +266,41 @@ namespace VertexColorPainter
             _cachedColors = mesh.colors;
             _selectedSubmesh = 0;
             
-            var bounds = mesh.bounds;
-            _maxBrushSize = Mathf.Min(bounds.size.x, bounds.size.y) / 4;
-            _minBrushSize = _maxBrushSize / 10;
+            if (Config.forceMinMaxBrushSize)
+            {
+                _minBrushSize = Config.forcedMinBrushSize;
+                _maxBrushSize = Config.forcedMaxBrushSize;
+            }
+            else
+            {
+                var bounds = mesh.bounds;
+                _maxBrushSize = Mathf.Min(bounds.size.x, bounds.size.y) / 4;
+                _minBrushSize = _maxBrushSize / 10;
+            }
 
             Config.brushSize = Math.Min(_maxBrushSize, Math.Max(_minBrushSize, Config.brushSize));
 
             EnumerateSubmeshes();
+
+            if (_paintedMesh.GetComponent<MeshRenderer>() && Config.meshFraming)
+            {
+                _usedFraming = true; 
+                var view = SceneView.lastActiveSceneView;
+                StoreSceneViewCamera(view);
+                view.Frame(_paintedMesh.GetComponent<MeshRenderer>().bounds, false);
+            }
 
             SceneView.duringSceneGui += OnSceneGUI;
         }
 
         public static void DisablePainting()
         {
+            // if (_usedFraming)
+            // {
+            //     _usedFraming = false;
+            //     RestoreSceneViewCamera(SceneView.lastActiveSceneView);
+            // }
+
             AnnotationUtilityUtil.showSelectedOutline = Config.previousOutlineSetting;
             _paintedMesh = null;
 
@@ -249,14 +320,16 @@ namespace VertexColorPainter
         }
 
 
-        static void HandleBrush()
+        static void HandlePaintBrush()
         {
             if (_mouseHitTransform == _paintedMesh.transform)
             {
                 var rotation = Quaternion.LookRotation(_mouseRaycastHit.normal);
-                Handles.ArrowHandleCap(3, _mouseRaycastHit.point, rotation, Config.brushSize, EventType.Repaint);
-                Handles.CircleHandleCap(2, _mousePosition, rotation, Config.brushSize, EventType.Repaint);
-                Handles.color = !Event.current.shift ? new Color(0, 1, 0, .2f) : new Color(1, 0, 0, .2f);
+                Handles.color = Color.white;
+                //Handles.ArrowHandleCap(3, _mouseRaycastHit.point, rotation, Config.brushSize, EventType.Repaint);
+                //Handles.CircleHandleCap(2, _mousePosition, rotation, Config.brushSize, EventType.Repaint);
+                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, Config.brushSize+Config.brushOutlineSize);
+                Handles.color = Config.brushColor;
                 Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, Config.brushSize);
 
                 if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
@@ -273,6 +346,26 @@ namespace VertexColorPainter
                 if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseUp)
                 {
                     EditorUtility.SetDirty(_paintedMesh);
+                }
+            }
+        }
+        
+        static void HandleFillBrush()
+        {
+            if (_mouseHitTransform == _paintedMesh.transform)
+            {
+                var rotation = Quaternion.LookRotation(_mouseRaycastHit.normal);
+                //Handles.ArrowHandleCap(3, _mouseRaycastHit.point, rotation, _minBrushSize+(_maxBrushSize-_minBrushSize), EventType.Repaint);
+                Handles.color = Color.white;
+                //Handles.CircleHandleCap(2, _mousePosition, rotation, _minBrushSize+_minBrushSize/10f, EventType.Repaint);
+                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, _minBrushSize+Config.brushOutlineSize);
+                Handles.color = Config.brushColor;
+                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, _minBrushSize);
+
+                if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
+                                                                        Event.current.type == EventType.MouseDown))
+                {
+                    FillColor(_mouseRaycastHit);
                 }
             }
         }
@@ -333,27 +426,61 @@ namespace VertexColorPainter
             }
         }
 
-        static void FillMeshColor(Color p_color, int p_submeshIndex)
+        static void FillColor(RaycastHit p_hit)
         {
             Undo.RegisterCompleteObjectUndo(_paintedMesh.sharedMesh, "Fill Color");
             Mesh mesh = _paintedMesh.sharedMesh;
 
-            if (p_submeshIndex > -1)
+            if (mesh.subMeshCount > 1)
             {
-                SubMeshDescriptor desc = mesh.GetSubMesh(p_submeshIndex);
+                int firstVertexIndex = p_hit.triangleIndex * 3;
+                int submeshIndex = GetSubMeshFromVertexIndex(mesh, firstVertexIndex);
+                
+                SubMeshDescriptor desc = mesh.GetSubMesh(submeshIndex);
 
                 for (int j = 0; j < desc.indexCount; j++)
                 {
-                    _cachedColors[mesh.triangles[desc.indexStart + j]] = p_color;
+                    _cachedColors[mesh.triangles[desc.indexStart + j]] = Config.brushColor;
                 }
             }
             else
             {
-                _cachedColors = Enumerable.Repeat(p_color, _cachedColors.Length).ToArray();
+                _cachedColors = Enumerable.Repeat(Config.brushColor, _cachedColors.Length).ToArray();
             }
             
             mesh.colors = _cachedColors;
             EditorUtility.SetDirty(_paintedMesh);
+        }
+
+        static int GetSubMeshFromVertexIndex(Mesh p_mesh, int p_vertexIndex)
+        {
+            if (p_mesh.subMeshCount == 1)
+                return 0;
+
+            for (int i = 0; i < p_mesh.subMeshCount; i++)
+            {
+                SubMeshDescriptor desc = p_mesh.GetSubMesh(i);
+
+                if (p_vertexIndex >= desc.indexStart && p_vertexIndex < desc.indexStart + desc.indexCount)
+                    return i;
+            }
+
+            return -1;
+        }
+        
+        static void StoreSceneViewCamera(SceneView p_sceneView)
+        {
+            _previousSceneViewPivot = p_sceneView.pivot;
+            _previousSceneViewRotation = p_sceneView.rotation;
+            _previousSceneViewSize = p_sceneView.size;
+        }
+        
+        static void RestoreSceneViewCamera(SceneView p_sceneView)
+        {
+            p_sceneView.pivot = _previousSceneViewPivot;
+            p_sceneView.rotation = _previousSceneViewRotation;
+            p_sceneView.size = _previousSceneViewSize;
+            p_sceneView.Repaint();
         }
     }
 }

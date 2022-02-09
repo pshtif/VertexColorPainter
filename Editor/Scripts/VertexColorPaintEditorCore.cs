@@ -5,13 +5,14 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using VertexColorPainter.Runtime;
 
-namespace VertexColorPainter
+namespace VertexColorPainter.Editor
 {
     [InitializeOnLoad]
     public class VertexColorPaintEditorCore
     {
-        const string VERSION = "0.1.2";
+        const string VERSION = "0.1.1";
 
         static private Material _vertexColorMaterial;
         
@@ -39,8 +40,10 @@ namespace VertexColorPainter
         static private int _selectedSubmesh = 0;
         static private string[] _cachedBrushTypeNames;
 
-        static private float _minBrushSize = 0;
-        static private float _maxBrushSize = 1;
+        static private float _minBrushSize = 1;
+        static private float _maxBrushSize = 10;
+
+        static private bool _meshIsolationEnabled = false;
 
         static VertexColorPaintEditorCore()
         {
@@ -169,7 +172,7 @@ namespace VertexColorPainter
             // Handles.EndGUI();
 
             // TODO move to a separate function
-            if (Config.meshIsolation)
+            if (_meshIsolationEnabled)
             {
                 if (_vertexColorMaterial == null)
                 {
@@ -224,11 +227,6 @@ namespace VertexColorPainter
                 GUILayout.Space(space);
             }
 
-            // if (GUILayout.Button("Fill Color", GUILayout.Width(100)))
-            // {
-            //     FillMeshColor(Config.brushColor, Config.lockToSubmesh ? _selectedSubmesh : -1);
-            // }
-
             if (_submeshColors.Count > 1 && Config.brushType != BrushType.FILL)
             {
                 GUILayout.Space(space);
@@ -245,6 +243,16 @@ namespace VertexColorPainter
             }
 
             GUILayout.FlexibleSpace();
+
+            _meshIsolationEnabled = GUILayout.Toggle(_meshIsolationEnabled, "Isolate Mesh");
+            
+            GUILayout.Space(space);
+            
+            if (GUILayout.Button("Frame", GUILayout.Width(60)))
+            {
+                Frame();
+            }
+            
             style.fontStyle = FontStyle.Normal;
             style.normal.textColor = Color.gray;
             GUILayout.Label("VertexColorPainter v"+VERSION, style);
@@ -271,28 +279,53 @@ namespace VertexColorPainter
                 _minBrushSize = Config.forcedMinBrushSize;
                 _maxBrushSize = Config.forcedMaxBrushSize;
             }
-            else
-            {
-                var bounds = mesh.bounds;
-                _maxBrushSize = Mathf.Min(bounds.size.x, bounds.size.y) / 4;
-                _minBrushSize = _maxBrushSize / 10;
-            }
 
             Config.brushSize = Math.Min(_maxBrushSize, Math.Max(_minBrushSize, Config.brushSize));
 
             EnumerateSubmeshes();
 
-            if (_paintedMesh.GetComponent<MeshRenderer>() && Config.meshFraming)
+            if (_paintedMesh.GetComponent<MeshRenderer>() && Config.autoMeshFraming)
             {
-                _usedFraming = true; 
-                var view = SceneView.lastActiveSceneView;
-                StoreSceneViewCamera(view);
-                view.Frame(_paintedMesh.GetComponent<MeshRenderer>().bounds, false);
+                _usedFraming = true;
+                Frame();
             }
 
+            _meshIsolationEnabled = Config.autoMeshIsolation;
             SceneView.duringSceneGui += OnSceneGUI;
+
+            if (_paintedMesh.gameObject.GetComponent<PaintedMeshFilter>() == null)
+            {
+                //if (AssetDatabase.Contains(_paintedMesh.sharedMesh))
+                {
+                    Mesh tempMesh = (Mesh)UnityEngine.Object.Instantiate(_paintedMesh.sharedMesh);
+                    tempMesh.name = _paintedMesh.sharedMesh.name;
+
+                    // var path = AssetDatabase.GetAssetPath(_paintedMesh.sharedMesh);
+                    // if (path.EndsWith(".fbx"))
+                    // {
+                    //     if (EditorUtility.DisplayDialog("Mesh Changes", "Do you want to export modified mesh as asset?",
+                    //         "Export", "No"))
+                    //     {
+                    //         path = path.Substring(0, path.LastIndexOf("/") + 1) + mesh.name + "_painted.asset";
+                    //         MeshUtility.Optimize(tempMesh);
+                    //         AssetDatabase.CreateAsset(tempMesh, path);
+                    //         AssetDatabase.SaveAssets();
+                    //     }
+                    // }
+
+                    _paintedMesh.sharedMesh = tempMesh;
+                    _paintedMesh.gameObject.AddComponent<PaintedMeshFilter>();
+                }
+            }
         }
 
+        private static void Frame()
+        {
+            var view = SceneView.lastActiveSceneView;
+            StoreSceneViewCamera(view);
+            view.Frame(_paintedMesh.GetComponent<MeshRenderer>().bounds, false);
+        }
+        
         public static void DisablePainting()
         {
             // if (_usedFraming)
@@ -312,7 +345,7 @@ namespace VertexColorPainter
             RaycastHit hit;
 
             if (EditorRaycast.RaycastWorld(Event.current.mousePosition, out hit, out _mouseHitTransform,
-                out _mouseHitMesh))
+                out _mouseHitMesh, null, new [] {_paintedMesh.gameObject}))
             {
                 _mousePosition = hit.point;
                 _mouseRaycastHit = hit;
@@ -326,11 +359,12 @@ namespace VertexColorPainter
             {
                 var rotation = Quaternion.LookRotation(_mouseRaycastHit.normal);
                 Handles.color = Color.white;
+                var gizmoSize = HandleUtility.GetHandleSize(_mouseRaycastHit.point) / 10f;
                 //Handles.ArrowHandleCap(3, _mouseRaycastHit.point, rotation, Config.brushSize, EventType.Repaint);
                 //Handles.CircleHandleCap(2, _mousePosition, rotation, Config.brushSize, EventType.Repaint);
-                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, Config.brushSize+Config.brushOutlineSize);
+                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, gizmoSize*Config.brushSize+gizmoSize/5);
                 Handles.color = Config.brushColor;
-                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, Config.brushSize);
+                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, gizmoSize*Config.brushSize);
 
                 if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
                 {
@@ -355,12 +389,13 @@ namespace VertexColorPainter
             if (_mouseHitTransform == _paintedMesh.transform)
             {
                 var rotation = Quaternion.LookRotation(_mouseRaycastHit.normal);
+                var gizmoSize = HandleUtility.GetHandleSize(_mouseRaycastHit.point) / 10f;
                 //Handles.ArrowHandleCap(3, _mouseRaycastHit.point, rotation, _minBrushSize+(_maxBrushSize-_minBrushSize), EventType.Repaint);
                 Handles.color = Color.white;
                 //Handles.CircleHandleCap(2, _mousePosition, rotation, _minBrushSize+_minBrushSize/10f, EventType.Repaint);
-                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, _minBrushSize+Config.brushOutlineSize);
+                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, gizmoSize+gizmoSize/5);
                 Handles.color = Config.brushColor;
-                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, _minBrushSize);
+                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, gizmoSize);
 
                 if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
                                                                         Event.current.type == EventType.MouseDown))
@@ -449,6 +484,7 @@ namespace VertexColorPainter
             }
             
             mesh.colors = _cachedColors;
+
             EditorUtility.SetDirty(_paintedMesh);
         }
 

@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-namespace VertexColorPainter
+namespace VertexColorPainter.Editor
 {
     using System.Linq;
     using System.Reflection;
@@ -39,13 +39,13 @@ namespace VertexColorPainter
 
         // Taken from Unity codebase for object raycasting in sceneview - sHTiF
         public static bool RaycastWorld(Vector2 p_position, out RaycastHit p_hit, out Transform p_transform,
-            out Mesh p_mesh)
+            out Mesh p_mesh, GameObject[] p_ignore, GameObject[] p_filter)
         {
             p_hit = new RaycastHit();
             p_transform = null;
             p_mesh = null;
 
-            GameObject picked = HandleUtility.PickGameObject(p_position, false);
+            GameObject picked = HandleUtility.PickGameObject(p_position, false, p_ignore, p_filter);
             if (!picked)
                 return false;
 

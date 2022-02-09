@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor;
 
-namespace VertexColorPainter
+namespace VertexColorPainter.Editor
 {
     public class AnnotationUtilityUtil
     {
@@ -15,7 +15,7 @@ namespace VertexColorPainter
         
         static void CacheUnityInternalCall()
         {
-            var annotationUtility = typeof(Editor).Assembly.GetTypes().FirstOrDefault(t => t.Name == "AnnotationUtility");
+            var annotationUtility = typeof(UnityEditor.Editor).Assembly.GetTypes().FirstOrDefault(t => t.Name == "AnnotationUtility");
             _showSelectedOutline = annotationUtility.GetProperty("showSelectionOutline", (BindingFlags.Static | BindingFlags.NonPublic));
         }
         

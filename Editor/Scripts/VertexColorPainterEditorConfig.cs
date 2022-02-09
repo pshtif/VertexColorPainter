@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-namespace VertexColorPainter
+namespace VertexColorPainter.Editor
 {
     using System;
     using UnityEngine;
@@ -29,10 +29,10 @@ namespace VertexColorPainter
         public bool previousOutlineSetting = false;
         
         [HideInInspector]
-        public bool meshIsolation = false;
+        public bool autoMeshIsolation = false;
 
         [HideInInspector]
-        public bool meshFraming = false;
+        public bool autoMeshFraming = false;
 
         public float brushOutlineSize = 0.004f;
 

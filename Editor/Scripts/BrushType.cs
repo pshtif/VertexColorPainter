@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-namespace VertexColorPainter
+namespace VertexColorPainter.Editor
 {
     public enum BrushType
     {

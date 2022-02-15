@@ -24,6 +24,9 @@ namespace VertexColorPainter.Editor
 
         [HideInInspector]
         public bool lockToSubmesh = false;
+        
+        [HideInInspector]
+        public bool autoFill = false;
 
         [HideInInspector]
         public bool previousOutlineSetting = false;
@@ -36,10 +39,8 @@ namespace VertexColorPainter.Editor
 
         public float brushOutlineSize = 0.004f;
 
-        public bool forceMinMaxBrushSize = false;
+        public float forcedMinBrushSize = 1f;
 
-        public float forcedMinBrushSize = 0.1f;
-
-        public float forcedMaxBrushSize = 1f;
+        public float forcedMaxBrushSize = 10f;
     }
 }

@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.1.5 - 15.2.2022
+
+#### Added
+
+- Added submesh right click pick
+- Added direct color change in scene view on right click
+- Added initial reimport mapping
+
+### Release 0.1.4 - 11.2.2022
+
+#### Added
+
+- Added autofill functionality
+- Added submesh list with colors
+
 ### Release 0.1.3 - 9.2.2022
 
 #### Added

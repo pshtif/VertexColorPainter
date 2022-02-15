@@ -2,6 +2,8 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using System;
+using UnityEditor;
 using UnityEngine;
 
 namespace VertexColorPainter.Runtime
@@ -26,5 +28,31 @@ namespace VertexColorPainter.Runtime
                 return _filter;
             }
         }
+
+#if UNITY_EDITOR
+        public bool showAdvanced = false;
+
+        public Mesh reimportMesh;
+        
+        [SerializeField]
+        private GUID _fbxGuid;
+        
+        public string fbxAssetPath
+        {
+            get
+            {
+                return AssetDatabase.GUIDToAssetPath(_fbxGuid);
+            }
+        }
+        
+        public void SetOriginalAsset(Mesh p_mesh)
+        {
+            if (AssetDatabase.Contains(p_mesh))
+            {
+                var path = AssetDatabase.GetAssetPath(p_mesh);
+                _fbxGuid = AssetDatabase.GUIDFromAssetPath(path);
+            }
+        }
+#endif
     }
 }

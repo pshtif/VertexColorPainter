@@ -10,42 +10,65 @@ using VertexColorPainter.Runtime;
 namespace VertexColorPainter.Editor
 {
     [InitializeOnLoad]
-    public class VertexColorPaintEditorCore
+    public class VertexColorPainterEditorCore
     {
-        const string VERSION = "0.1.1";
+        const string VERSION = "0.1.5";
 
         static private Material _vertexColorMaterial;
+
+        static public Material VertexColorMaterial
+        {
+            get
+            {
+                if (_vertexColorMaterial == null)
+                {
+                    _vertexColorMaterial = new Material(Shader.Find("Hidden/VertexColorPainter/VertexColorShader"));
+                }
+
+                return _vertexColorMaterial;
+            }
+        }
         
+        static private Material _selectionMaterial;
+
+        static public Material SelectionMaterial
+        {
+            get
+            {
+                if (_selectionMaterial == null)
+                {
+                    _selectionMaterial = new Material(Shader.Find("Hidden/VertexColorPainter/SelectionShader"));
+                }
+
+                return _selectionMaterial;
+            }
+        }
+
         static private GameObject _previousSelected;
         static private Vector3 _previousSceneViewPivot;
         static private Quaternion _previousSceneViewRotation;
         static private float _previousSceneViewSize;
-        static private bool _usedFraming = false;
 
         static public VertexColorPainterEditorConfig Config { get; private set; }
 
         static private MeshFilter _paintedMesh;
 
         static private RaycastHit _mouseRaycastHit;
-        static private Vector3 _mousePosition;
         static private Vector3 _lastMousePosition;
         static private Transform _mouseHitTransform;
         static private Mesh _mouseHitMesh;
 
-        static private int[] _cachedIndices;
-        static private Vector3[] _cachedVertices;
-        static private Color[] _cachedColors;
-        static private List<Color> _submeshColors;
-        static private List<string> _submeshNames;
+        static public int[] CachedIndices { get; private set; }
+        static public Vector3[] CachedVertices { get; private set; }
+        static public Color[] CachedColors;
+        static public List<Color> SubmeshColors { get; private set; }
+        static public List<string> SubmeshNames { get; private set; }
         static private int _selectedSubmesh = 0;
         static private string[] _cachedBrushTypeNames;
-
-        static private float _minBrushSize = 1;
-        static private float _maxBrushSize = 10;
-
+        
         static private bool _meshIsolationEnabled = false;
 
-        static VertexColorPaintEditorCore()
+        static VertexColorPainterEditorCore()
         {
             CreateConfig();
             
@@ -62,7 +85,7 @@ namespace VertexColorPainter.Editor
                 return;
 
             _paintedMesh.sharedMesh.colors = _paintedMesh.sharedMesh.colors;
-            _cachedColors = _paintedMesh.sharedMesh.colors;
+            CachedColors = _paintedMesh.sharedMesh.colors;
             
             EditorUtility.SetDirty(_paintedMesh.sharedMesh);
             SceneView.RepaintAll();
@@ -117,13 +140,17 @@ namespace VertexColorPainter.Editor
                 HandleMouseHit(p_sceneView);
             }
 
+            if (_mouseHitTransform != _paintedMesh.transform)
+                return;
+            
             switch (Config.brushType)
             {
                 case BrushType.PAINT:
-                    HandlePaintBrush();
+                    PaintTool.Handle(_mouseHitTransform, _mouseRaycastHit, _paintedMesh,
+                        _selectedSubmesh);
                     break;
                 case BrushType.FILL:
-                    HandleFillBrush();
+                    FillTool.Handle(_mouseRaycastHit, _paintedMesh);
                     break;
             }
         }
@@ -174,13 +201,8 @@ namespace VertexColorPainter.Editor
             // TODO move to a separate function
             if (_meshIsolationEnabled)
             {
-                if (_vertexColorMaterial == null)
-                {
-                    _vertexColorMaterial = new Material(Shader.Find("Hidden/VertexColorPainter/VertexColorShader"));
-                }
-
                 GL.Clear(true, true, Color.black);
-                _vertexColorMaterial.SetPass(0);
+                VertexColorMaterial.SetPass(0);
                 Graphics.DrawMeshNow(_paintedMesh.sharedMesh, _paintedMesh.transform.localToWorldMatrix);
             }
 
@@ -210,36 +232,15 @@ namespace VertexColorPainter.Editor
 
             GUILayout.Label("Brush Type: ", style, GUILayout.Width(80));
             Config.brushType = (BrushType)EditorGUILayout.Popup((int)Config.brushType, _cachedBrushTypeNames, GUILayout.Width(120));
-            
-            GUILayout.Space(space);
-            
-            GUILayout.Label("Brush Color: ", style, GUILayout.Width(80));
-            Config.brushColor = EditorGUILayout.ColorField(Config.brushColor, GUILayout.Width(60));
 
-            GUILayout.Space(space);
-
-            if (Config.brushType == BrushType.PAINT)
+            switch (Config.brushType)
             {
-                GUILayout.Label("Brush Size: ", style, GUILayout.Width(80));
-                Config.brushSize =
-                    EditorGUILayout.Slider(Config.brushSize, _minBrushSize, _maxBrushSize, GUILayout.Width(200));
-
-                GUILayout.Space(space);
-            }
-
-            if (_submeshColors.Count > 1 && Config.brushType != BrushType.FILL)
-            {
-                GUILayout.Space(space);
-
-                GUILayout.Label("Lock to Submesh: ", style, GUILayout.Width(110));
-                Config.lockToSubmesh = EditorGUILayout.Toggle(Config.lockToSubmesh, GUILayout.Width(20));
-
-                if (Config.lockToSubmesh)
-                {
-                    GUILayout.Label("Submesh: ", style, GUILayout.Width(65));
-                    _selectedSubmesh =
-                        EditorGUILayout.Popup(_selectedSubmesh, _submeshNames.ToArray(), GUILayout.Width(120));
-                }
+                case BrushType.PAINT:
+                    PaintTool.DrawGUI(space);
+                    break;
+                case BrushType.FILL:
+                    FillTool.DrawGUI(space, _paintedMesh);
+                    break;
             }
 
             GUILayout.FlexibleSpace();
@@ -269,24 +270,18 @@ namespace VertexColorPainter.Editor
             
             _paintedMesh = p_meshFilter;
             var mesh = _paintedMesh.sharedMesh;
-            _cachedIndices = mesh.triangles;
-            _cachedVertices = mesh.vertices;
-            _cachedColors = mesh.colors;
+            CachedIndices = mesh.triangles;
+            CachedVertices = mesh.vertices;
+            CachedColors = mesh.colors;
             _selectedSubmesh = 0;
-            
-            if (Config.forceMinMaxBrushSize)
-            {
-                _minBrushSize = Config.forcedMinBrushSize;
-                _maxBrushSize = Config.forcedMaxBrushSize;
-            }
 
-            Config.brushSize = Math.Min(_maxBrushSize, Math.Max(_minBrushSize, Config.brushSize));
+            Config.brushSize = Math.Min(Config.forcedMaxBrushSize, Math.Max(Config.forcedMinBrushSize, Config.brushSize));
 
             EnumerateSubmeshes();
 
             if (_paintedMesh.GetComponent<MeshRenderer>() && Config.autoMeshFraming)
             {
-                _usedFraming = true;
+                //_usedFraming = true;
                 Frame();
             }
 
@@ -296,7 +291,7 @@ namespace VertexColorPainter.Editor
             if (_paintedMesh.gameObject.GetComponent<PaintedMeshFilter>() == null)
             {
                 //if (AssetDatabase.Contains(_paintedMesh.sharedMesh))
-                {
+                //{
                     Mesh tempMesh = (Mesh)UnityEngine.Object.Instantiate(_paintedMesh.sharedMesh);
                     tempMesh.name = _paintedMesh.sharedMesh.name;
 
@@ -313,9 +308,11 @@ namespace VertexColorPainter.Editor
                     //     }
                     // }
 
+                    PaintedMeshFilter pmf = _paintedMesh.gameObject.AddComponent<PaintedMeshFilter>();
+                    pmf.SetOriginalAsset(_paintedMesh.sharedMesh);
+                    
                     _paintedMesh.sharedMesh = tempMesh;
-                    _paintedMesh.gameObject.AddComponent<PaintedMeshFilter>();
-                }
+                //}
             }
         }
 
@@ -328,12 +325,6 @@ namespace VertexColorPainter.Editor
         
         public static void DisablePainting()
         {
-            // if (_usedFraming)
-            // {
-            //     _usedFraming = false;
-            //     RestoreSceneViewCamera(SceneView.lastActiveSceneView);
-            // }
-
             AnnotationUtilityUtil.showSelectedOutline = Config.previousOutlineSetting;
             _paintedMesh = null;
 
@@ -347,163 +338,31 @@ namespace VertexColorPainter.Editor
             if (EditorRaycast.RaycastWorld(Event.current.mousePosition, out hit, out _mouseHitTransform,
                 out _mouseHitMesh, null, new [] {_paintedMesh.gameObject}))
             {
-                _mousePosition = hit.point;
                 _mouseRaycastHit = hit;
             }
         }
 
-
-        static void HandlePaintBrush()
-        {
-            if (_mouseHitTransform == _paintedMesh.transform)
-            {
-                var rotation = Quaternion.LookRotation(_mouseRaycastHit.normal);
-                Handles.color = Color.white;
-                var gizmoSize = HandleUtility.GetHandleSize(_mouseRaycastHit.point) / 10f;
-                //Handles.ArrowHandleCap(3, _mouseRaycastHit.point, rotation, Config.brushSize, EventType.Repaint);
-                //Handles.CircleHandleCap(2, _mousePosition, rotation, Config.brushSize, EventType.Repaint);
-                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, gizmoSize*Config.brushSize+gizmoSize/5);
-                Handles.color = Config.brushColor;
-                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, gizmoSize*Config.brushSize);
-
-                if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
-                {
-                    Undo.RegisterCompleteObjectUndo(_paintedMesh.sharedMesh, "Paint Color");
-                }
-                
-                if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
-                                                                        Event.current.type == EventType.MouseDown))
-                {
-                    PaintVertices(_mouseRaycastHit);
-                }
-
-                if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseUp)
-                {
-                    EditorUtility.SetDirty(_paintedMesh);
-                }
-            }
-        }
-        
-        static void HandleFillBrush()
-        {
-            if (_mouseHitTransform == _paintedMesh.transform)
-            {
-                var rotation = Quaternion.LookRotation(_mouseRaycastHit.normal);
-                var gizmoSize = HandleUtility.GetHandleSize(_mouseRaycastHit.point) / 10f;
-                //Handles.ArrowHandleCap(3, _mouseRaycastHit.point, rotation, _minBrushSize+(_maxBrushSize-_minBrushSize), EventType.Repaint);
-                Handles.color = Color.white;
-                //Handles.CircleHandleCap(2, _mousePosition, rotation, _minBrushSize+_minBrushSize/10f, EventType.Repaint);
-                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, gizmoSize+gizmoSize/5);
-                Handles.color = Config.brushColor;
-                Handles.DrawSolidDisc(_mousePosition, _mouseRaycastHit.normal, gizmoSize);
-
-                if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
-                                                                        Event.current.type == EventType.MouseDown))
-                {
-                    FillColor(_mouseRaycastHit);
-                }
-            }
-        }
-
-        static void PaintVertices(RaycastHit p_hit)
-        {
-            if (_cachedVertices == null)
-                return;
-
-            if (Config.lockToSubmesh)
-            {
-                Mesh mesh = _paintedMesh.sharedMesh;
-                SubMeshDescriptor desc = _paintedMesh.sharedMesh.GetSubMesh(_selectedSubmesh);
-                
-                for (int i = 0; i < desc.indexCount; i++)
-                {
-                    int index = _cachedIndices[i + desc.indexStart];
-                    if (Vector3.Distance(_mouseHitTransform.TransformPoint(_cachedVertices[index]), p_hit.point) <
-                        Config.brushSize)
-                    {
-                        _cachedColors[index] = Config.brushColor;
-                    }
-                }
-            }
-            else
-            {
-                for (int i = 0; i < _cachedVertices.Length; i++)
-                {
-                    if (Vector3.Distance(_mouseHitTransform.TransformPoint(_cachedVertices[i]), p_hit.point) <
-                        Config.brushSize)
-                    {
-                        _cachedColors[i] = Config.brushColor;
-                    }
-                }
-            }
-
-            _paintedMesh.sharedMesh.colors = _cachedColors;
-        }
-
         static void EnumerateSubmeshes()
         {
-            _submeshColors = new List<Color>();
-            _submeshNames = new List<string>();
+            SubmeshColors = new List<Color>();
+            SubmeshNames = new List<string>();
             Mesh mesh = _paintedMesh.sharedMesh;
 
-            if (_cachedColors == null || _cachedColors.Length < mesh.vertexCount)
+            if (CachedColors == null || CachedColors.Length < mesh.vertexCount)
             {
-                _cachedColors = Enumerable.Repeat(Color.white, mesh.vertexCount).ToArray();
+                CachedColors = Enumerable.Repeat(Color.white, mesh.vertexCount).ToArray();
             }
 
-            mesh.colors = _cachedColors;
+            mesh.colors = CachedColors;
 
             for (int i = 0; i < mesh.subMeshCount; i++)
             {
                 SubMeshDescriptor desc = mesh.GetSubMesh(i);
-                _submeshColors.Add(_cachedColors[mesh.triangles[desc.indexStart]]);
-                _submeshNames.Add("Submesh " + i);
+                SubmeshColors.Add(CachedColors[mesh.triangles[desc.indexStart]]);
+                SubmeshNames.Add("Submesh " + i);
             }
         }
 
-        static void FillColor(RaycastHit p_hit)
-        {
-            Undo.RegisterCompleteObjectUndo(_paintedMesh.sharedMesh, "Fill Color");
-            Mesh mesh = _paintedMesh.sharedMesh;
-
-            if (mesh.subMeshCount > 1)
-            {
-                int firstVertexIndex = p_hit.triangleIndex * 3;
-                int submeshIndex = GetSubMeshFromVertexIndex(mesh, firstVertexIndex);
-                
-                SubMeshDescriptor desc = mesh.GetSubMesh(submeshIndex);
-
-                for (int j = 0; j < desc.indexCount; j++)
-                {
-                    _cachedColors[mesh.triangles[desc.indexStart + j]] = Config.brushColor;
-                }
-            }
-            else
-            {
-                _cachedColors = Enumerable.Repeat(Config.brushColor, _cachedColors.Length).ToArray();
-            }
-            
-            mesh.colors = _cachedColors;
-
-            EditorUtility.SetDirty(_paintedMesh);
-        }
-
-        static int GetSubMeshFromVertexIndex(Mesh p_mesh, int p_vertexIndex)
-        {
-            if (p_mesh.subMeshCount == 1)
-                return 0;
-
-            for (int i = 0; i < p_mesh.subMeshCount; i++)
-            {
-                SubMeshDescriptor desc = p_mesh.GetSubMesh(i);
-
-                if (p_vertexIndex >= desc.indexStart && p_vertexIndex < desc.indexStart + desc.indexCount)
-                    return i;
-            }
-
-            return -1;
-        }
-        
         static void StoreSceneViewCamera(SceneView p_sceneView)
         {
             _previousSceneViewPivot = p_sceneView.pivot;

@@ -11,19 +11,19 @@ namespace VertexColorPainter.Editor
         [MenuItem("Tools/Vertex Color Painter/Enabled")]
         private static void ToggleEnabled()
         {
-            VertexColorPaintEditorCore.Config.enabled = !VertexColorPaintEditorCore.Config.enabled;
+            VertexColorPainterEditorCore.Config.enabled = !VertexColorPainterEditorCore.Config.enabled;
         }
 
         [MenuItem("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)")]
         private static void ToggleMeshIsolation()
         {
-            VertexColorPaintEditorCore.Config.autoMeshIsolation = !VertexColorPaintEditorCore.Config.autoMeshIsolation;
+            VertexColorPainterEditorCore.Config.autoMeshIsolation = !VertexColorPainterEditorCore.Config.autoMeshIsolation;
         }
         
         [MenuItem("Tools/Vertex Color Painter/Auto Mesh Framing")]
         private static void ToggleMeshFraming()
         {
-            VertexColorPaintEditorCore.Config.autoMeshFraming = !VertexColorPaintEditorCore.Config.autoMeshFraming;
+            VertexColorPainterEditorCore.Config.autoMeshFraming = !VertexColorPainterEditorCore.Config.autoMeshFraming;
         }
         
         [MenuItem("Tools/Vertex Color Painter/Enabled", true)]
@@ -31,9 +31,9 @@ namespace VertexColorPainter.Editor
         [MenuItem("Tools/Vertex Color Painter/Auto Mesh Framing", true)]
         private static bool ToggleActionValidate()
         {
-            Menu.SetChecked("Tools/Vertex Color Painter/Enabled", VertexColorPaintEditorCore.Config.enabled);
-            Menu.SetChecked("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)", VertexColorPaintEditorCore.Config.autoMeshIsolation);
-            Menu.SetChecked("Tools/Vertex Color Painter/Auto Mesh Framing", VertexColorPaintEditorCore.Config.autoMeshFraming);
+            Menu.SetChecked("Tools/Vertex Color Painter/Enabled", VertexColorPainterEditorCore.Config.enabled);
+            Menu.SetChecked("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)", VertexColorPainterEditorCore.Config.autoMeshIsolation);
+            Menu.SetChecked("Tools/Vertex Color Painter/Auto Mesh Framing", VertexColorPainterEditorCore.Config.autoMeshFraming);
             return true;
         }
     }

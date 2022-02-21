@@ -173,8 +173,9 @@ namespace VertexColorPainter.Editor
         private static void DrawDisabledGUI(SceneView p_sceneView)
         {
             Handles.BeginGUI();
+
+            var rect = p_sceneView.camera.GetScaledPixelRect();
             
-            var rect = p_sceneView.camera.pixelRect;
             
             if (GUI.Button(new Rect(5, rect.height - 25, 120, 20), "Enable Paiting"))
             {
@@ -186,7 +187,7 @@ namespace VertexColorPainter.Editor
 
         private static void DrawEnabledGUI(SceneView p_sceneView)
         {
-            var rect = p_sceneView.camera.pixelRect;
+            var rect = p_sceneView.camera.GetScaledPixelRect();
 
             GUIStyle style = new GUIStyle(GUI.skin.box);
             style.normal.background = Texture2D.whiteTexture; // must be white to tint properly
@@ -210,7 +211,7 @@ namespace VertexColorPainter.Editor
 
             int space = 8;
             
-            GUI.Box(new Rect(0, rect.height - 30, rect.width, 30), "", style);
+            GUI.Box(new Rect(0, rect.height - 30, rect.width , 30), "", style);
 
             GUILayout.BeginArea(new Rect(5, rect.height - 22, rect.width - 5, 20));
             GUILayout.BeginHorizontal();

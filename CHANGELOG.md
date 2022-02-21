@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.1.6 - 21.2.2022
+
+#### Fixed
+
+- Fixed GUI uses now scaled pixelRect to avoid scaling problems
+
 ### Release 0.1.5 - 15.2.2022
 
 #### Added

@@ -303,8 +303,6 @@ namespace VertexColorPainter.Editor
                     //     {
                         var name = path.Substring(0, path.Length-4).Substring(path.LastIndexOf("/")+1);
                         path = path.Substring(0, path.LastIndexOf("/") + 1) + name + "_painted.asset";
-                        Debug.Log(name);
-                        Debug.Log(path);
                         MeshUtility.Optimize(tempMesh);
                         AssetDatabase.CreateAsset(tempMesh, path);
                         AssetDatabase.SaveAssets();

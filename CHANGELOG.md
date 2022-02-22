@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.1.7 - 23.2.2022
+
+#### Changed
+
+- Changed painted geometry now saves as an Unity asset to the FBX folder due to prefab referencing
+
 ### Release 0.1.6 - 21.2.2022
 
 #### Fixed

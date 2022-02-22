@@ -294,20 +294,22 @@ namespace VertexColorPainter.Editor
                 //if (AssetDatabase.Contains(_paintedMesh.sharedMesh))
                 //{
                     Mesh tempMesh = (Mesh)UnityEngine.Object.Instantiate(_paintedMesh.sharedMesh);
-                    tempMesh.name = _paintedMesh.sharedMesh.name;
 
-                    // var path = AssetDatabase.GetAssetPath(_paintedMesh.sharedMesh);
-                    // if (path.EndsWith(".fbx"))
-                    // {
+                    var path = AssetDatabase.GetAssetPath(_paintedMesh.sharedMesh);
+                    if (path.EndsWith(".fbx"))
+                    {
                     //     if (EditorUtility.DisplayDialog("Mesh Changes", "Do you want to export modified mesh as asset?",
                     //         "Export", "No"))
                     //     {
-                    //         path = path.Substring(0, path.LastIndexOf("/") + 1) + mesh.name + "_painted.asset";
-                    //         MeshUtility.Optimize(tempMesh);
-                    //         AssetDatabase.CreateAsset(tempMesh, path);
-                    //         AssetDatabase.SaveAssets();
+                        var name = path.Substring(0, path.Length-4).Substring(path.LastIndexOf("/")+1);
+                        path = path.Substring(0, path.LastIndexOf("/") + 1) + name + "_painted.asset";
+                        Debug.Log(name);
+                        Debug.Log(path);
+                        MeshUtility.Optimize(tempMesh);
+                        AssetDatabase.CreateAsset(tempMesh, path);
+                        AssetDatabase.SaveAssets();
                     //     }
-                    // }
+                    }
 
                     PaintedMeshFilter pmf = _paintedMesh.gameObject.AddComponent<PaintedMeshFilter>();
                     pmf.SetOriginalAsset(_paintedMesh.sharedMesh);

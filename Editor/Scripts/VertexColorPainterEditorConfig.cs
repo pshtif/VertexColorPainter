@@ -2,11 +2,11 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using System;
+using UnityEngine;
+
 namespace VertexColorPainter.Editor
 {
-    using System;
-    using UnityEngine;
-
     [Serializable]
     public class VertexColorPainterEditorConfig : ScriptableObject
     {

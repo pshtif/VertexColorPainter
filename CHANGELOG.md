@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.1.8 - 28.2.2022
+
+#### Changed
+
+- Convert all path checks to lowercase :)
+
 ### Release 0.1.7 - 23.2.2022
 
 #### Changed

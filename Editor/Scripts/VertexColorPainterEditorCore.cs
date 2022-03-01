@@ -12,7 +12,7 @@ namespace VertexColorPainter.Editor
     [InitializeOnLoad]
     public class VertexColorPainterEditorCore
     {
-        const string VERSION = "0.1.5";
+        const string VERSION = "0.1.8";
 
         static private Material _vertexColorMaterial;
 
@@ -294,8 +294,9 @@ namespace VertexColorPainter.Editor
                 //if (AssetDatabase.Contains(_paintedMesh.sharedMesh))
                 //{
                     Mesh tempMesh = (Mesh)UnityEngine.Object.Instantiate(_paintedMesh.sharedMesh);
-
+                
                     var path = AssetDatabase.GetAssetPath(_paintedMesh.sharedMesh);
+                    path = path.ToLower();
                     if (path.EndsWith(".fbx"))
                     {
                     //     if (EditorUtility.DisplayDialog("Mesh Changes", "Do you want to export modified mesh as asset?",

@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace VertexColorPainter.Runtime
 {
-    public class PaintedMeshFilter : MonoBehaviour
+    public class VCPMeshFilter : MonoBehaviour
     {
         private MeshFilter _filter;
         

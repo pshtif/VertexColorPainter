@@ -62,6 +62,7 @@ namespace VertexColorPainter.Editor
         {
             Undo.RegisterCompleteObjectUndo(p_meshFilter.sharedMesh, "Fill Color");
             Mesh mesh = p_meshFilter.sharedMesh;
+            var triangles = mesh.triangles;
 
             if (mesh.subMeshCount > 1)
             {
@@ -72,7 +73,7 @@ namespace VertexColorPainter.Editor
 
                 for (int j = 0; j < desc.indexCount; j++)
                 {
-                    Core.CachedColors[mesh.triangles[desc.indexStart + j]] = Core.Config.brushColor;
+                    Core.CachedColors[triangles[desc.indexStart + j]] = Core.Config.brushColor;
                 }
             }
             else
@@ -89,6 +90,7 @@ namespace VertexColorPainter.Editor
         {
             Undo.RegisterCompleteObjectUndo(p_meshFilter.sharedMesh, "Fill Color");
             Mesh mesh = p_meshFilter.sharedMesh;
+            var triangles = mesh.triangles;
 
             if (mesh.subMeshCount > 1)
             {
@@ -96,7 +98,7 @@ namespace VertexColorPainter.Editor
 
                 for (int j = 0; j < desc.indexCount; j++)
                 {
-                    Core.CachedColors[mesh.triangles[desc.indexStart + j]] = Core.Config.brushColor;
+                    Core.CachedColors[triangles[desc.indexStart + j]] = Core.Config.brushColor;
                 }
             }
             else
@@ -109,7 +111,7 @@ namespace VertexColorPainter.Editor
             EditorUtility.SetDirty(p_meshFilter);
         }
         
-        public override void DrawGUI()
+        public override void DrawGUI(SceneView p_sceneView)
         {
             var space = 8;
             var style = new GUIStyle("label");
@@ -147,6 +149,30 @@ namespace VertexColorPainter.Editor
                     });
                 }
             }
+        }
+        
+        public override void DrawHelpGUI(SceneView p_sceneView)
+        {
+            // Help
+            var rect = p_sceneView.camera.GetScaledPixelRect();
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 500, rect.height-50, 1000, 30));
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+
+            GUILayout.Label(" Left Mouse: ", Core.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Fill color of mesh/submesh ", Core.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Space(8);
+            
+            GUILayout.Label(" Ctrl + Left Mouse: ", Core.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Select submesh ", Core.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Space(8);
+            
+            GUILayout.Label(" Ctrl + Right Mouse: ", Core.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Change color of submesh ", Core.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
         }
     }
 }

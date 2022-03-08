@@ -11,6 +11,8 @@ namespace VertexColorPainter.Editor
 {
     public class PaintTool : ToolBase
     {
+        protected Color _pickedColor;
+        
         public override void HandleMouseHitInternal(RaycastHit p_hit, Transform p_hitTransform)
         {
             DrawHandle(p_hit);
@@ -19,11 +21,28 @@ namespace VertexColorPainter.Editor
             {
                 Undo.RegisterCompleteObjectUndo(Core.PaintedMesh.sharedMesh, "Paint Color");
             }
-            
+
+            if (Event.current.control)
+            {
+                int index = MeshUtils.GetClosesVertexIndex(Core.PaintedMesh.sharedMesh, Core.PaintedMesh.transform.worldToLocalMatrix, p_hit);
+                _pickedColor = Core.CachedColors[index];
+            }
+            else
+            {
+                _pickedColor = Core.Config.brushColor;
+            }
+
             if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
                                                                     Event.current.type == EventType.MouseDown))
             {
-                Paint(p_hitTransform, p_hit);
+                if (Event.current.control)
+                {
+                    Core.Config.brushColor = _pickedColor;
+                }
+                else
+                {
+                    Paint(p_hitTransform, p_hit);
+                }
             }
 
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseUp)
@@ -37,7 +56,7 @@ namespace VertexColorPainter.Editor
             Handles.color = Color.white;
             var gizmoSize = HandleUtility.GetHandleSize(p_hit.point) / 10f;
             Handles.DrawSolidDisc(p_hit.point, p_hit.normal, gizmoSize * Core.Config.brushSize + gizmoSize / 5);
-            Handles.color = Core.Config.brushColor;
+            Handles.color = _pickedColor;
             Handles.DrawSolidDisc(p_hit.point, p_hit.normal, gizmoSize * Core.Config.brushSize);
         }
         
@@ -47,6 +66,7 @@ namespace VertexColorPainter.Editor
                 return;
             
             var brushSize = HandleUtility.GetHandleSize(p_hit.point) / 10f * Core.Config.brushSize;
+            int closestIndex = MeshUtils.GetClosesVertexIndex(Core.PaintedMesh.sharedMesh, Core.PaintedMesh.transform.worldToLocalMatrix, p_hit);
 
             if (Core.Config.lockToSubmesh)
             {
@@ -57,7 +77,7 @@ namespace VertexColorPainter.Editor
                 {
                     int index = Core.CachedIndices[i + desc.indexStart];
                     if (Vector3.Distance(p_hitTransform.TransformPoint(Core.CachedVertices[index]), p_hit.point) <
-                        brushSize)
+                        brushSize || (Core.Config.enableClosestPaint && i+desc.indexStart == closestIndex))
                     {
                         Core.CachedColors[index] = Core.Config.brushColor;
                     }
@@ -68,7 +88,7 @@ namespace VertexColorPainter.Editor
                 for (int i = 0; i < Core.CachedVertices.Length; i++)
                 {
                     if (Vector3.Distance(p_hitTransform.TransformPoint(Core.CachedVertices[i]), p_hit.point) <
-                        brushSize)
+                        brushSize || (Core.Config.enableClosestPaint && i == closestIndex))
                     {
                         Core.CachedColors[i] = Core.Config.brushColor;
                     }
@@ -78,7 +98,7 @@ namespace VertexColorPainter.Editor
             Core.PaintedMesh.sharedMesh.colors = Core.CachedColors;
         }
 
-        public override void DrawGUI()
+        public override void DrawGUI(SceneView p_sceneView)
         {
             var space = 8;
             var style = new GUIStyle("label");
@@ -111,6 +131,25 @@ namespace VertexColorPainter.Editor
                         EditorGUILayout.Popup(_selectedSubmesh, Core.SubmeshNames.ToArray(), GUILayout.Width(120));
                 }
             }
+        }
+
+        public override void DrawHelpGUI(SceneView p_sceneView)
+        {
+            var rect = p_sceneView.camera.GetScaledPixelRect();
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 500, rect.height-50, 1000, 30));
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+
+            GUILayout.Label(" Left Mouse: ", Core.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Paint vertex color ", Core.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Space(8);
+            
+            GUILayout.Label(" Ctrl + Left Mouse: ", Core.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Pick vertex color ", Core.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
         }
     }
 }

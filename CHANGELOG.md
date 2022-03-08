@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.3.0
+
+### Added
+
+- Added support to enable closes point paint (automatically paints closest vertex to hit point even outside of brushsize bounds)
+- Color pick for Paint tool
+- Color pick now supports transformed objects with worldToLocal handling
+- Added on screen help text for tooling
+
+### Changed
+
+- Removed mesh isolation due to issues on some platforms and gizmo handling in this mode
+- Optimizations in fill tool
+- More refactoring through codebase
+
 ### Release 0.2.1 - 8.3.2022
 
 #### Added

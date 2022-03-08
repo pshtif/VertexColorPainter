@@ -16,19 +16,19 @@ namespace VertexColorPainter.Editor
     {
         private Mesh _importedMesh;
         
-        private PaintedMeshFilter _paintedMesh;
+        private VCPMeshFilter _vcpMesh;
         
         private ReorderableList _importedSubMeshList;
         
         public static ReimportWindow Instance { get; private set; }
         
-        public static ReimportWindow InitReimportWindow(PaintedMeshFilter p_paintedMesh)
+        public static ReimportWindow InitReimportWindow(VCPMeshFilter p_vcpMesh)
         {
             Instance = GetWindow<ReimportWindow>();
-            Instance._paintedMesh = p_paintedMesh;
+            Instance._vcpMesh = p_vcpMesh;
             Instance.titleContent = new GUIContent("Vertex Color Editor Reimport");
-            Instance.minSize = new Vector2(800, p_paintedMesh.filter.sharedMesh.subMeshCount * 22 + 165);
-            Instance.maxSize = new Vector2(800, p_paintedMesh.filter.sharedMesh.subMeshCount * 22 + 165);
+            Instance.minSize = new Vector2(800, p_vcpMesh.filter.sharedMesh.subMeshCount * 22 + 165);
+            Instance.maxSize = new Vector2(800, p_vcpMesh.filter.sharedMesh.subMeshCount * 22 + 165);
 
             return Instance;
         }
@@ -53,8 +53,8 @@ namespace VertexColorPainter.Editor
                 RefreshList(MeshUtils.GetSubMeshDescriptors(_importedMesh));
             }
             
-            var originalSubMeshes = MeshUtils.GetSubMeshDescriptors(_paintedMesh.filter.sharedMesh);
-            var originalColors = MeshUtils.GetSubMeshColors(_paintedMesh.filter.sharedMesh);
+            var originalSubMeshes = MeshUtils.GetSubMeshDescriptors(_vcpMesh.filter.sharedMesh);
+            var originalColors = MeshUtils.GetSubMeshColors(_vcpMesh.filter.sharedMesh);
             var importedSubMeshes = MeshUtils.GetSubMeshDescriptors(_importedMesh);
 
             style.fontSize = 12;
@@ -136,7 +136,7 @@ namespace VertexColorPainter.Editor
             
             _importedSubMeshList.drawElementCallback += DrawListItems;
 
-            var count = Math.Max(_paintedMesh.filter.sharedMesh.subMeshCount, p_subMeshes.Length);
+            var count = Math.Max(_vcpMesh.filter.sharedMesh.subMeshCount, p_subMeshes.Length);
             
             Instance.minSize = new Vector2(800, count * 22 + 165);
             Instance.maxSize = new Vector2(800, count * 22 + 165);
@@ -152,7 +152,7 @@ namespace VertexColorPainter.Editor
 
         private void Reimport()
         {
-            var originalColors = MeshUtils.GetSubMeshColors(_paintedMesh.filter.sharedMesh);
+            var originalColors = MeshUtils.GetSubMeshColors(_vcpMesh.filter.sharedMesh);
             
             var newMesh = Instantiate(_importedMesh);
             var colors =  newMesh.colors;
@@ -168,7 +168,7 @@ namespace VertexColorPainter.Editor
 
             newMesh.colors = colors;
 
-            _paintedMesh.filter.sharedMesh = newMesh;
+            _vcpMesh.filter.sharedMesh = newMesh;
         }
     }
 }

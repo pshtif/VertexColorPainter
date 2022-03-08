@@ -79,7 +79,7 @@ namespace VertexColorPainter.Editor
             return -1;
         }
 
-        public static int GetClosesVertexIndex(Mesh p_mesh, RaycastHit p_hit)
+        public static int GetClosesVertexIndex(Mesh p_mesh, Matrix4x4 p_worldToLocal, RaycastHit p_hit)
         {
             var triangleIndex = p_hit.triangleIndex;
             var indices = p_mesh.triangles;
@@ -88,19 +88,20 @@ namespace VertexColorPainter.Editor
             int i2 = indices[triangleIndex * 3 + 1];
             int i3 = indices[triangleIndex * 3 + 2];
 
-            var d = Vector3.Distance(p_hit.point, vertices[i1]);
+            var worldPoint = p_worldToLocal.MultiplyPoint(p_hit.point);
+
+            var d = Vector3.Distance(worldPoint, vertices[i1]);
             var i = i1;
-            var nd = Vector3.Distance(p_hit.point, vertices[i2]); 
+            var nd = Vector3.Distance(worldPoint, vertices[i2]);
             if (nd < d)
             {
                 d = nd;
                 i = i2;
             }
             
-            nd = Vector3.Distance(p_hit.point, vertices[i3]); 
+            nd = Vector3.Distance(worldPoint, vertices[i3]);
             if (nd < d)
             {
-                d = nd;
                 i = i3;
             }
 

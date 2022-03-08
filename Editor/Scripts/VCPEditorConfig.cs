@@ -9,10 +9,13 @@ using UnityEngine;
 namespace VertexColorPainter.Editor
 {
     [Serializable]
-    public class VertexColorPainterEditorConfig : ScriptableObject
+    public class VCPEditorConfig : ScriptableObject
     {
         [HideInInspector]
         public bool enabled = false;
+
+        [HideInInspector]
+        public bool enableClosestPaint = false;
 
         [HideInInspector]
         public ToolType toolType;
@@ -50,15 +53,15 @@ namespace VertexColorPainter.Editor
 
         public float forcedMaxBrushSize = 10f;
 
-        public static VertexColorPainterEditorConfig Create()
+        public static VCPEditorConfig Create()
         {
-            var config = (VertexColorPainterEditorConfig)AssetDatabase.LoadAssetAtPath(
+            var config = (VCPEditorConfig)AssetDatabase.LoadAssetAtPath(
                 "Assets/Resources/Editor/VertexColorPainterEditorConfig.asset",
-                typeof(VertexColorPainterEditorConfig));
+                typeof(VCPEditorConfig));
 
             if (config == null)
             {
-                config = ScriptableObject.CreateInstance<VertexColorPainterEditorConfig>();
+                config = ScriptableObject.CreateInstance<VCPEditorConfig>();
                 if (config != null)
                 {
                     if (!AssetDatabase.IsValidFolder("Assets/Resources"))

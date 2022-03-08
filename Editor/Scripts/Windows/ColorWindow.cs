@@ -16,7 +16,7 @@ namespace VertexColorPainter.Editor
     {
         private Mesh _importedMesh;
         
-        private PaintedMeshFilter _paintedMesh;
+        private VCPMeshFilter _vcpMesh;
         
         private ReorderableList _importedSubMeshList;
         
@@ -40,20 +40,20 @@ namespace VertexColorPainter.Editor
 
             GUILayout.Label("Color Editor", style, GUILayout.Height(24));
 
-            if (VertexColorPainterEditorCore.Instance.PaintedMesh == null)
+            if (VCPEditorCore.Instance.PaintedMesh == null)
             {
                 GUILayout.Label("No mesh is being painted.");
                 return;
             }
 
-            var uniqueColors = VertexColorPainterEditorCore.Instance.CachedColors.Distinct();
+            var uniqueColors = VCPEditorCore.Instance.CachedColors.Distinct();
 
             foreach (var color in uniqueColors)
             {
                 var newColor = EditorGUILayout.ColorField(color);
                 if (newColor != color)
                 {
-                    ChangeMeshColor(VertexColorPainterEditorCore.Instance.PaintedMesh, color, newColor);
+                    ChangeMeshColor(VCPEditorCore.Instance.PaintedMesh, color, newColor);
                 }
             }
         }
@@ -64,13 +64,13 @@ namespace VertexColorPainter.Editor
 
             for (int i = 0; i < mesh.vertexCount; i++)
             {
-                if (VertexColorPainterEditorCore.Instance.CachedColors[i] == p_oldColor)
+                if (VCPEditorCore.Instance.CachedColors[i] == p_oldColor)
                 {
-                    VertexColorPainterEditorCore.Instance.CachedColors[i] = p_newColor;
+                    VCPEditorCore.Instance.CachedColors[i] = p_newColor;
                 }
             }
 
-            mesh.colors = VertexColorPainterEditorCore.Instance.CachedColors;
+            mesh.colors = VCPEditorCore.Instance.CachedColors;
 
             EditorUtility.SetDirty(p_meshFilter);
         }

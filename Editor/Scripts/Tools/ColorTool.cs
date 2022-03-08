@@ -28,7 +28,7 @@ namespace VertexColorPainter.Editor
 
             if (Event.current.control)
             {
-                int index = MeshUtils.GetClosesVertexIndex(mesh, p_hit);
+                int index = MeshUtils.GetClosesVertexIndex(mesh, Core.PaintedMesh.transform.worldToLocalMatrix, p_hit);
                 _pickedColor = Core.CachedColors[index];
                 int submesh = MeshUtils.GetSubMeshIndexFromTriangle(mesh, p_hit.triangleIndex);
                 
@@ -56,7 +56,7 @@ namespace VertexColorPainter.Editor
             Handles.DrawSolidDisc(p_hit.point, p_hit.normal, gizmoSize * Core.Config.brushSize);
         }
         
-        public override void DrawGUI()
+        public override void DrawGUI(SceneView p_sceneView)
         {
             var space = 8;
             
@@ -70,10 +70,11 @@ namespace VertexColorPainter.Editor
 
             GUILayout.Space(space);
             
-            GUILayout.Label("Current Color: ", style, GUILayout.Width(80));
+            GUILayout.Label("Current Color: ", style, GUILayout.Width(85));
             Core.Config.colorChangeCurrent = EditorGUILayout.ColorField(Core.Config.colorChangeCurrent, GUILayout.Width(60));
+            GUILayout.Space(8);
             
-            GUILayout.Label("New Color: ", style, GUILayout.Width(80));
+            GUILayout.Label("New Color: ", style, GUILayout.Width(67));
             EditorGUI.BeginChangeCheck();
             Core.Config.colorChangeNew = EditorGUILayout.ColorField(Core.Config.colorChangeNew, GUILayout.Width(60));
 
@@ -154,5 +155,21 @@ namespace VertexColorPainter.Editor
             
             return colorIndices;
         } 
+        
+        public override void DrawHelpGUI(SceneView p_sceneView)
+        {
+            // Help
+            var rect = p_sceneView.camera.GetScaledPixelRect();
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 500, rect.height-50, 1000, 30));
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+
+            GUILayout.Label(" Ctrl + Left Mouse: ", Core.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Pick vertex color ", Core.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
+        }
     }
 }

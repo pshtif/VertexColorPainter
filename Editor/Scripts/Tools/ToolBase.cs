@@ -9,7 +9,7 @@ namespace VertexColorPainter.Editor
 {
     public abstract class ToolBase
     {
-        public VertexColorPainterEditorCore Core => VertexColorPainterEditorCore.Instance;
+        public VCPEditorCore Core => VCPEditorCore.Instance;
         
         protected RaycastHit _mouseRaycastHit;
         protected Vector3 _lastMousePosition;
@@ -44,6 +44,8 @@ namespace VertexColorPainter.Editor
 
         public abstract void HandleMouseHitInternal(RaycastHit p_hit, Transform p_transform);
 
-        public abstract void DrawGUI();
+        public abstract void DrawGUI(SceneView p_sceneView);
+
+        public abstract void DrawHelpGUI(SceneView p_sceneView);
     }
 }

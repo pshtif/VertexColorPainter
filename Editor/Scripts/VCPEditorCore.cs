@@ -10,12 +10,14 @@ using VertexColorPainter.Runtime;
 namespace VertexColorPainter.Editor
 {
     [InitializeOnLoad]
-    public class VertexColorPainterEditorCore
+    public class VCPEditorCore
     {
-        const string VERSION = "0.2.0";
+        const string VERSION = "0.3.0";
         
-        private static VertexColorPainterEditorCore _instance;
-        public static VertexColorPainterEditorCore Instance => _instance;
+        public GUISkin Skin => (GUISkin)Resources.Load("Skins/VertexColorPainterSkin");
+        
+        private static VCPEditorCore _instance;
+        public static VCPEditorCore Instance => _instance;
         
         private Material _vertexColorMaterial;
 
@@ -51,7 +53,7 @@ namespace VertexColorPainter.Editor
         private Quaternion _previousSceneViewRotation;
         private float _previousSceneViewSize;
 
-        public VertexColorPainterEditorConfig Config { get; private set; }
+        public VCPEditorConfig Config { get; private set; }
 
         private MeshFilter _paintedMesh;
         public MeshFilter PaintedMesh => _paintedMesh;
@@ -68,14 +70,14 @@ namespace VertexColorPainter.Editor
 
         private ToolBase _currentTool;
 
-        static VertexColorPainterEditorCore()
+        static VCPEditorCore()
         {
-            _instance = new VertexColorPainterEditorCore();
+            _instance = new VCPEditorCore();
         }
 
-        public VertexColorPainterEditorCore()
+        public VCPEditorCore()
         {
-            Config = VertexColorPainterEditorConfig.Create();
+            Config = VCPEditorConfig.Create();
             
             SceneView.duringSceneGui -= OnSceneGUI;
             SceneView.duringSceneGui += OnSceneGUI;
@@ -160,7 +162,7 @@ namespace VertexColorPainter.Editor
 
             GUIStyle style = new GUIStyle(GUI.skin.box);
             style.normal.background = Texture2D.whiteTexture; // must be white to tint properly
-            GUI.color = new Color(0, 0, 0, .45f);
+            GUI.color = new Color(0, 0, 0, .4f);
             
             // Handles.BeginGUI();
             //
@@ -171,9 +173,9 @@ namespace VertexColorPainter.Editor
             // TODO move to a separate function
             if (_meshIsolationEnabled)
             {
-                GL.Clear(true, true, Color.black);
-                VertexColorMaterial.SetPass(0);
-                Graphics.DrawMeshNow(_paintedMesh.sharedMesh, _paintedMesh.transform.localToWorldMatrix);
+                //GL.Clear(true, true, Color.black);
+                //VertexColorMaterial.SetPass(0);
+                //Graphics.DrawMeshNow(_paintedMesh.sharedMesh, _paintedMesh.transform.localToWorldMatrix);
             }
 
             Handles.BeginGUI();
@@ -203,23 +205,11 @@ namespace VertexColorPainter.Editor
             GUILayout.Label("Brush Type: ", style, GUILayout.Width(80));
             Config.toolType = (ToolType)EditorGUILayout.Popup((int)Config.toolType, _cachedBrushTypeNames, GUILayout.Width(120));
 
-            _currentTool.DrawGUI();
-            // switch (Config.brushType)
-            // {
-            //     case BrushType.PAINT:
-            //         PaintTool.DrawGUI(space);
-            //         break;
-            //     case BrushType.FILL:
-            //         FillTool.DrawGUI(space, _paintedMesh);
-            //         break;
-            //     case BrushType.COLOR:
-            //         ColorTool.DrawGUI();
-            //         break;
-            // }
+            _currentTool.DrawGUI(p_sceneView);
 
             GUILayout.FlexibleSpace();
 
-            _meshIsolationEnabled = GUILayout.Toggle(_meshIsolationEnabled, "Isolate Mesh");
+            //_meshIsolationEnabled = GUILayout.Toggle(_meshIsolationEnabled, "Isolate Mesh");
             
             GUILayout.Space(space);
             
@@ -233,6 +223,8 @@ namespace VertexColorPainter.Editor
             GUILayout.Label("VertexColorPainter v"+VERSION, style);
             GUILayout.EndHorizontal();
             GUILayout.EndArea();
+            
+            _currentTool.DrawHelpGUI(p_sceneView);
             
             Handles.EndGUI();
         }
@@ -277,7 +269,7 @@ namespace VertexColorPainter.Editor
             _meshIsolationEnabled = Config.autoMeshIsolation;
             SceneView.duringSceneGui += OnSceneGUI;
 
-            if (_paintedMesh.gameObject.GetComponent<PaintedMeshFilter>() == null)
+            if (_paintedMesh.gameObject.GetComponent<VCPMeshFilter>() == null)
             {
                 //if (AssetDatabase.Contains(_paintedMesh.sharedMesh))
                 //{
@@ -299,7 +291,7 @@ namespace VertexColorPainter.Editor
                     //     }
                     }
 
-                    PaintedMeshFilter pmf = _paintedMesh.gameObject.AddComponent<PaintedMeshFilter>();
+                    VCPMeshFilter pmf = _paintedMesh.gameObject.AddComponent<VCPMeshFilter>();
                     pmf.SetOriginalAsset(_paintedMesh.sharedMesh);
                     
                     _paintedMesh.sharedMesh = tempMesh;

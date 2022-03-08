@@ -13,12 +13,12 @@ using VertexColorPainter.Runtime;
 
 namespace VertexColorPainter.Editor
 {
-    [CustomEditor(typeof(PaintedMeshFilter))]
-    public class PaintedMeshFilterEditor : UnityEditor.Editor
+    [CustomEditor(typeof(VCPMeshFilter))]
+    public class VCPMeshFilterEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
-            PaintedMeshFilter pmf = (target as PaintedMeshFilter);
+            VCPMeshFilter pmf = (target as VCPMeshFilter);
             
             var style = new GUIStyle();
             style.normal.textColor = new Color(1, 0.5f, 0);

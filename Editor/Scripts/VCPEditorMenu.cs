@@ -6,14 +6,20 @@ using UnityEditor;
 
 namespace VertexColorPainter.Editor
 {
-    public class VertexColorPainterEditorMenu
+    public class VCPEditorMenu
     {
-        static VertexColorPainterEditorCore Core => VertexColorPainterEditorCore.Instance; 
+        static VCPEditorCore Core => VCPEditorCore.Instance; 
         
         [MenuItem("Tools/Vertex Color Painter/Enabled")]
         private static void ToggleEnabled()
         {
             Core.Config.enabled = !Core.Config.enabled;
+        }
+        
+        [MenuItem("Tools/Vertex Color Painter/Closest Paint")]
+        private static void ToggleClosestPaint()
+        {
+            Core.Config.enableClosestPaint = !Core.Config.enableClosestPaint;
         }
 
         [MenuItem("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)")]
@@ -29,11 +35,13 @@ namespace VertexColorPainter.Editor
         }
         
         [MenuItem("Tools/Vertex Color Painter/Enabled", true)]
+        [MenuItem("Tools/Vertex Color Painter/Closest Paint", true)]
         [MenuItem("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)", true)]
         [MenuItem("Tools/Vertex Color Painter/Auto Mesh Framing", true)]
         private static bool ToggleActionValidate()
         {
             Menu.SetChecked("Tools/Vertex Color Painter/Enabled", Core.Config.enabled);
+            Menu.SetChecked("Tools/Vertex Color Painter/Closest Paint", Core.Config.enableClosestPaint);
             Menu.SetChecked("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)", Core.Config.autoMeshIsolation);
             Menu.SetChecked("Tools/Vertex Color Painter/Auto Mesh Framing", Core.Config.autoMeshFraming);
             return true;

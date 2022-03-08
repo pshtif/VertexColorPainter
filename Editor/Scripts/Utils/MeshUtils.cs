@@ -50,6 +50,8 @@ namespace VertexColorPainter.Editor
             {
                 SubMeshDescriptor desc = p_mesh.GetSubMesh(i);
                 p_colors[i] = cachedColors[p_mesh.triangles[desc.indexStart]];
+                // Debug.Log(i+" : "+desc.firstVertex+" : "+desc.vertexCount+" : "+desc.baseVertex+" : "+desc.indexStart+" : "+desc.indexCount);
+                // Debug.Log(p_mesh.triangles[desc.indexStart]);
             }
 
             return p_colors;
@@ -74,6 +76,34 @@ namespace VertexColorPainter.Editor
 
             Debug.LogWarning("Invalid triangle index.");
             return -1;
+        }
+
+        public static int GetClosesVertexIndex(Mesh p_mesh, RaycastHit p_hit)
+        {
+            var triangleIndex = p_hit.triangleIndex;
+            var indices = p_mesh.triangles;
+            var vertices = p_mesh.vertices;
+            int i1 = indices[triangleIndex * 3];
+            int i2 = indices[triangleIndex * 3 + 1];
+            int i3 = indices[triangleIndex * 3 + 2];
+
+            var d = Vector3.Distance(p_hit.point, vertices[i1]);
+            var i = i1;
+            var nd = Vector3.Distance(p_hit.point, vertices[i2]); 
+            if (nd < d)
+            {
+                d = nd;
+                i = i2;
+            }
+            
+            nd = Vector3.Distance(p_hit.point, vertices[i3]); 
+            if (nd < d)
+            {
+                d = nd;
+                i = i3;
+            }
+
+            return i;
         }
     }
 }

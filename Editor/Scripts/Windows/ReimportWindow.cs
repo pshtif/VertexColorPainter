@@ -121,21 +121,8 @@ namespace VertexColorPainter.Editor
 
             if (GUI.Button(new Rect(5+position.width/2, position.height-45, position.width/2-8, 40), "Reimport"))
             {
-                var newMesh = Instantiate(_importedMesh);
-                var colors =  newMesh.colors;
-                if (colors.Length == 0) colors = new Color[newMesh.vertexCount];
-                for (int i = 0; i < _importedSubMeshList.list.Count; i++)
-                {
-                    for (int j = 0; j < ((SubMeshDescriptor)_importedSubMeshList.list[i]).vertexCount; j++)
-                    {
-                        colors[((SubMeshDescriptor)_importedSubMeshList.list[i]).firstVertex + j] = i>=originalColors.Length ? Color.white : originalColors[i];
-                    }
-                }
-
-                newMesh.colors = colors;
-
-                _paintedMesh.filter.sharedMesh = newMesh;
-
+                Reimport();
+                
                 Close();
             }
 
@@ -161,6 +148,27 @@ namespace VertexColorPainter.Editor
             
             //EditorGUI.PropertyField(new Rect(p_rect.x, p_rect.y, 100, EditorGUIUtility.singleLineHeight), , GUIContent.none);
             EditorGUI.LabelField(new Rect(p_rect.x, p_rect.y, 100, EditorGUIUtility.singleLineHeight), item.vertexCount+" verts");
+        }
+
+        private void Reimport()
+        {
+            var originalColors = MeshUtils.GetSubMeshColors(_paintedMesh.filter.sharedMesh);
+            
+            var newMesh = Instantiate(_importedMesh);
+            var colors =  newMesh.colors;
+            if (colors.Length == 0) colors = new Color[newMesh.vertexCount];
+            for (int i = 0; i < _importedSubMeshList.list.Count; i++)
+            {
+                for (int j = 0; j < ((SubMeshDescriptor)_importedSubMeshList.list[i]).indexCount; j++)
+                {
+                    int index = _importedMesh.triangles[((SubMeshDescriptor)_importedSubMeshList.list[i]).indexStart + j];
+                    colors[index] = i>=originalColors.Length ? Color.white : originalColors[i];
+                }
+            }
+
+            newMesh.colors = colors;
+
+            _paintedMesh.filter.sharedMesh = newMesh;
         }
     }
 }

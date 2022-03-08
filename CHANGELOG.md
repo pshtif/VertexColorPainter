@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.2.0 - 8.3.2022
+
+#### Added
+
+- New color tool where you change color directly instead of painting
+- New color editor tool where you see palette of a whole object and can recolorize
+
+#### Changed
+
+- Complete refactoring of the codebase to cleanup
+
+#### Fixed
+
+- Reimport now correctly reindexes old color data
+
+### Release 0.1.9 - 1.3.2022
+
+#### Changed
+
+- Naming of painted assets is now fbx_name + mesh_name + _painted so it is possible to auto save multiple modified assets from single FBX 
+
 ### Release 0.1.8 - 28.2.2022
 
 #### Changed

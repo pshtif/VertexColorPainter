@@ -4,9 +4,10 @@
 
 namespace VertexColorPainter.Editor
 {
-    public enum BrushType
+    public enum ToolType
     {
         PAINT,
-        FILL
+        FILL,
+        COLOR
     }
 }

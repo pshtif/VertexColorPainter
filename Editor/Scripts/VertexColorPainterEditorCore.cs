@@ -12,11 +12,14 @@ namespace VertexColorPainter.Editor
     [InitializeOnLoad]
     public class VertexColorPainterEditorCore
     {
-        const string VERSION = "0.1.8";
+        const string VERSION = "0.2.0";
+        
+        private static VertexColorPainterEditorCore _instance;
+        public static VertexColorPainterEditorCore Instance => _instance;
+        
+        private Material _vertexColorMaterial;
 
-        static private Material _vertexColorMaterial;
-
-        static public Material VertexColorMaterial
+        public Material VertexColorMaterial
         {
             get
             {
@@ -29,9 +32,8 @@ namespace VertexColorPainter.Editor
             }
         }
         
-        static private Material _selectionMaterial;
-
-        static public Material SelectionMaterial
+        private Material _selectionMaterial; 
+        public Material SelectionMaterial
         {
             get
             {
@@ -44,33 +46,36 @@ namespace VertexColorPainter.Editor
             }
         }
 
-        static private GameObject _previousSelected;
-        static private Vector3 _previousSceneViewPivot;
-        static private Quaternion _previousSceneViewRotation;
-        static private float _previousSceneViewSize;
+        private GameObject _previousSelected;
+        private Vector3 _previousSceneViewPivot;
+        private Quaternion _previousSceneViewRotation;
+        private float _previousSceneViewSize;
 
-        static public VertexColorPainterEditorConfig Config { get; private set; }
+        public VertexColorPainterEditorConfig Config { get; private set; }
 
-        static private MeshFilter _paintedMesh;
+        private MeshFilter _paintedMesh;
+        public MeshFilter PaintedMesh => _paintedMesh;
 
-        static private RaycastHit _mouseRaycastHit;
-        static private Vector3 _lastMousePosition;
-        static private Transform _mouseHitTransform;
-        static private Mesh _mouseHitMesh;
-
-        static public int[] CachedIndices { get; private set; }
-        static public Vector3[] CachedVertices { get; private set; }
-        static public Color[] CachedColors;
-        static public List<Color> SubmeshColors { get; private set; }
-        static public List<string> SubmeshNames { get; private set; }
-        static private int _selectedSubmesh = 0;
-        static private string[] _cachedBrushTypeNames;
+        // Caches
+        public int[] CachedIndices { get; private set; }
+        public Vector3[] CachedVertices { get; private set; }
+        public Color[] CachedColors;
+        public List<Color> SubmeshColors { get; private set; }
+        public List<string> SubmeshNames { get; private set; }
+        private string[] _cachedBrushTypeNames;
         
-        static private bool _meshIsolationEnabled = false;
+        private bool _meshIsolationEnabled = false;
+
+        private ToolBase _currentTool;
 
         static VertexColorPainterEditorCore()
         {
-            CreateConfig();
+            _instance = new VertexColorPainterEditorCore();
+        }
+
+        public VertexColorPainterEditorCore()
+        {
+            Config = VertexColorPainterEditorConfig.Create();
             
             SceneView.duringSceneGui -= OnSceneGUI;
             SceneView.duringSceneGui += OnSceneGUI;
@@ -79,7 +84,7 @@ namespace VertexColorPainter.Editor
             Undo.undoRedoPerformed += UndoRedoCallback;
         }
 
-        static void UndoRedoCallback()
+        void UndoRedoCallback()
         {
             if (_paintedMesh == null || !Config.enabled)
                 return;
@@ -91,71 +96,35 @@ namespace VertexColorPainter.Editor
             SceneView.RepaintAll();
         }
 
-        static void CreateConfig()
-        {
-            Config = (VertexColorPainterEditorConfig)AssetDatabase.LoadAssetAtPath(
-                "Assets/Resources/Editor/VertexColorPainterEditorConfig.asset",
-                typeof(VertexColorPainterEditorConfig));
-
-            if (Config == null)
-            {
-                Config = ScriptableObject.CreateInstance<VertexColorPainterEditorConfig>();
-                if (Config != null)
-                {
-                    if (!AssetDatabase.IsValidFolder("Assets/Resources"))
-                    {
-                        AssetDatabase.CreateFolder("Assets", "Resources");
-                    }
-
-                    if (!AssetDatabase.IsValidFolder("Assets/Resources/Editor"))
-                    {
-                        AssetDatabase.CreateFolder("Assets/Resources", "Editor");
-                    }
-
-                    AssetDatabase.CreateAsset(Config, "Assets/Resources/Editor/VertexColorPainterEditorConfig.asset");
-                    AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
-                }
-            }
-        }
-
-        private static void OnSceneGUI(SceneView p_sceneView)
+        private void OnSceneGUI(SceneView p_sceneView)
         {
             if (!Config.enabled)
                 return;
 
+            if (_paintedMesh != null)
+            {
+                // if (Selection.activeGameObject != _paintedMesh.gameObject)
+                //     Selection.activeGameObject = _paintedMesh.gameObject;
+                
+                InvalidateCurrentTool();
+
+                Tools.current = Tool.None;
+                HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
+
+                var rect = p_sceneView.camera.GetScaledPixelRect();
+                rect = new Rect(0, rect.height - 30, rect.width, 30);
+
+                // Don't draw tool under gui
+                if (!rect.Contains(Event.current.mousePosition))
+                {
+                    _currentTool?.HandleMouseHit(p_sceneView);
+                }
+            }
+
             DrawGUI(p_sceneView);
-
-            if (_paintedMesh == null)
-                return;
-
-            if (Selection.activeGameObject != _paintedMesh.gameObject)
-                Selection.activeGameObject = _paintedMesh.gameObject;
-
-            Tools.current = Tool.None;
-            HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
-
-            if (Event.current.isMouse)
-            {
-                HandleMouseHit(p_sceneView);
-            }
-
-            if (_mouseHitTransform != _paintedMesh.transform)
-                return;
-            
-            switch (Config.brushType)
-            {
-                case BrushType.PAINT:
-                    PaintTool.Handle(_mouseHitTransform, _mouseRaycastHit, _paintedMesh,
-                        _selectedSubmesh);
-                    break;
-                case BrushType.FILL:
-                    FillTool.Handle(_mouseRaycastHit, _paintedMesh);
-                    break;
-            }
         }
 
-        private static void DrawGUI(SceneView p_sceneView)
+        private void DrawGUI(SceneView p_sceneView)
         {
             if (_paintedMesh == null)
             {
@@ -170,7 +139,7 @@ namespace VertexColorPainter.Editor
             }
         }
 
-        private static void DrawDisabledGUI(SceneView p_sceneView)
+        private void DrawDisabledGUI(SceneView p_sceneView)
         {
             Handles.BeginGUI();
 
@@ -185,7 +154,7 @@ namespace VertexColorPainter.Editor
             Handles.EndGUI();
         }
 
-        private static void DrawEnabledGUI(SceneView p_sceneView)
+        private void DrawEnabledGUI(SceneView p_sceneView)
         {
             var rect = p_sceneView.camera.GetScaledPixelRect();
 
@@ -229,20 +198,24 @@ namespace VertexColorPainter.Editor
             style.fontStyle = FontStyle.Bold;
 
             if (_cachedBrushTypeNames == null)
-                _cachedBrushTypeNames = ((BrushType[])Enum.GetValues(typeof(BrushType))).Select(t => t.ToString()).ToArray();
+                _cachedBrushTypeNames = ((ToolType[])Enum.GetValues(typeof(ToolType))).Select(t => t.ToString()).ToArray();
 
             GUILayout.Label("Brush Type: ", style, GUILayout.Width(80));
-            Config.brushType = (BrushType)EditorGUILayout.Popup((int)Config.brushType, _cachedBrushTypeNames, GUILayout.Width(120));
+            Config.toolType = (ToolType)EditorGUILayout.Popup((int)Config.toolType, _cachedBrushTypeNames, GUILayout.Width(120));
 
-            switch (Config.brushType)
-            {
-                case BrushType.PAINT:
-                    PaintTool.DrawGUI(space);
-                    break;
-                case BrushType.FILL:
-                    FillTool.DrawGUI(space, _paintedMesh);
-                    break;
-            }
+            _currentTool.DrawGUI();
+            // switch (Config.brushType)
+            // {
+            //     case BrushType.PAINT:
+            //         PaintTool.DrawGUI(space);
+            //         break;
+            //     case BrushType.FILL:
+            //         FillTool.DrawGUI(space, _paintedMesh);
+            //         break;
+            //     case BrushType.COLOR:
+            //         ColorTool.DrawGUI();
+            //         break;
+            // }
 
             GUILayout.FlexibleSpace();
 
@@ -264,7 +237,23 @@ namespace VertexColorPainter.Editor
             Handles.EndGUI();
         }
 
-        public static void EnablePainting(MeshFilter p_meshFilter)
+        public void InvalidateCurrentTool()
+        {
+            switch (Config.toolType)
+            {
+                case ToolType.PAINT:
+                    if (_currentTool?.GetType() != typeof(PaintTool)) _currentTool = new PaintTool();
+                    break;
+                case ToolType.FILL:
+                    if (_currentTool?.GetType() != typeof(FillTool)) _currentTool = new FillTool();
+                    break;
+                case ToolType.COLOR:
+                    if (_currentTool?.GetType() != typeof(ColorTool)) _currentTool = new ColorTool();
+                    break;
+            }
+        }
+
+        public void EnablePainting(MeshFilter p_meshFilter)
         {
             Config.previousOutlineSetting = AnnotationUtilityUtil.showSelectedOutline;
             AnnotationUtilityUtil.showSelectedOutline = false;
@@ -274,7 +263,6 @@ namespace VertexColorPainter.Editor
             CachedIndices = mesh.triangles;
             CachedVertices = mesh.vertices;
             CachedColors = mesh.colors;
-            _selectedSubmesh = 0;
 
             Config.brushSize = Math.Min(Config.forcedMaxBrushSize, Math.Max(Config.forcedMinBrushSize, Config.brushSize));
 
@@ -302,7 +290,8 @@ namespace VertexColorPainter.Editor
                     //     if (EditorUtility.DisplayDialog("Mesh Changes", "Do you want to export modified mesh as asset?",
                     //         "Export", "No"))
                     //     {
-                        var name = path.Substring(0, path.Length-4).Substring(path.LastIndexOf("/")+1);
+                    var name = path.Substring(0, path.Length - 4).Substring(path.LastIndexOf("/") + 1) + "_" +
+                               _paintedMesh.sharedMesh.name;
                         path = path.Substring(0, path.LastIndexOf("/") + 1) + name + "_painted.asset";
                         MeshUtility.Optimize(tempMesh);
                         AssetDatabase.CreateAsset(tempMesh, path);
@@ -318,14 +307,14 @@ namespace VertexColorPainter.Editor
             }
         }
 
-        private static void Frame()
+        private void Frame()
         {
             var view = SceneView.lastActiveSceneView;
             StoreSceneViewCamera(view);
             view.Frame(_paintedMesh.GetComponent<MeshRenderer>().bounds, false);
         }
         
-        public static void DisablePainting()
+        public void DisablePainting()
         {
             AnnotationUtilityUtil.showSelectedOutline = Config.previousOutlineSetting;
             _paintedMesh = null;
@@ -333,18 +322,7 @@ namespace VertexColorPainter.Editor
             SceneView.duringSceneGui -= OnSceneGUI;
         }
 
-        static void HandleMouseHit(SceneView p_sceneView)
-        {
-            RaycastHit hit;
-
-            if (EditorRaycast.RaycastWorld(Event.current.mousePosition, out hit, out _mouseHitTransform,
-                out _mouseHitMesh, null, new [] {_paintedMesh.gameObject}))
-            {
-                _mouseRaycastHit = hit;
-            }
-        }
-
-        static void EnumerateSubmeshes()
+        void EnumerateSubmeshes()
         {
             SubmeshColors = new List<Color>();
             SubmeshNames = new List<string>();
@@ -365,14 +343,14 @@ namespace VertexColorPainter.Editor
             }
         }
 
-        static void StoreSceneViewCamera(SceneView p_sceneView)
+        void StoreSceneViewCamera(SceneView p_sceneView)
         {
             _previousSceneViewPivot = p_sceneView.pivot;
             _previousSceneViewRotation = p_sceneView.rotation;
             _previousSceneViewSize = p_sceneView.size;
         }
         
-        static void RestoreSceneViewCamera(SceneView p_sceneView)
+        void RestoreSceneViewCamera(SceneView p_sceneView)
         {
             p_sceneView.pivot = _previousSceneViewPivot;
             p_sceneView.rotation = _previousSceneViewRotation;

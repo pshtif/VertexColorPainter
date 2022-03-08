@@ -2,6 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -104,6 +105,29 @@ namespace VertexColorPainter.Editor
             }
 
             return i;
+        }
+
+        public static bool CheckVertexUniqueness(Mesh p_mesh)
+        {
+            if (p_mesh.subMeshCount == 1)
+                return true;
+            
+            List<int> checkedIndices = new List<int>();
+            var triangles = p_mesh.triangles;
+
+            for (int i = 0; i < p_mesh.subMeshCount; i++)
+            {
+                var desc = p_mesh.GetSubMesh(i);
+                for (int j = 0; j < desc.indexCount; j++)
+                {
+                    var index = triangles[desc.indexStart + j];
+                    if (checkedIndices.Contains(index))
+                        return false;
+                    checkedIndices.Add(index);
+                }
+            }
+
+            return true;
         }
     }
 }

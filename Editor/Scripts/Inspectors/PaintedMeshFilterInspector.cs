@@ -41,6 +41,20 @@ namespace VertexColorPainter.Editor
                 EditorGUIUtility.PingObject(AssetDatabase.LoadAssetAtPath<Mesh>(pmf.fbxAssetPath));
             }
 
+            if (GUILayout.Button("Check Vertex Uniqueness"))
+            {
+                if (MeshUtils.CheckVertexUniqueness(pmf.filter.sharedMesh))
+                {
+                    EditorUtility.DisplayDialog("Vertex check",
+                        "Vertices on mesh " + pmf.filter.sharedMesh.name + " are unique.", "OK");
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Vertex check",
+                        "Vertices on mesh " + pmf.filter.sharedMesh.name + " are NOT unique.", "OK");
+                }
+            }
+            
             if (GUILayout.Button("Open Reimport", GUILayout.Height(32)))
             {
                 ReimportWindow.InitReimportWindow(pmf);

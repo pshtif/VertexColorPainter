@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.2.1 - 8.3.2022
+
+#### Added
+
+- Added vertex checking option if they are unique (not same for different submeshes)
+
 ### Release 0.2.0 - 8.3.2022
 
 #### Added

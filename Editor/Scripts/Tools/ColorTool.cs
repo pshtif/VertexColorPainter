@@ -19,7 +19,6 @@ namespace VertexColorPainter.Editor
 
         public override void HandleMouseHitInternal(RaycastHit p_hit, Transform p_hitTransform)
         {
-            var transform = Core.PaintedMesh.transform;
             var mesh = Core.PaintedMesh.sharedMesh;
             
             if (_lastCachedMesh != mesh)
@@ -42,7 +41,7 @@ namespace VertexColorPainter.Editor
                                            Event.current.type == EventType.MouseDown))
                 {
                     _selectedSubmesh = submesh;
-                    Core.Config.colorChangeCurrent = Core.SubmeshColors[_selectedSubmesh];
+                    Core.Config.colorChangeCurrent = _pickedColor;
                     CacheColorIndices(Core.Config.colorChangeCurrent, mesh);
                 }
             }

@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-Shader "Hidden/VertexColorPainter/SelectionShader"
+Shader "Hidden/Vertex Color Painter/SelectionShader"
 {
     Properties
     {

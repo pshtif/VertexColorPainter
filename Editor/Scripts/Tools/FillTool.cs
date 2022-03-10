@@ -55,7 +55,7 @@ namespace VertexColorPainter.Editor
         void OnColorChange(MeshFilter p_meshFilter, Color p_color)
         {
             Core.Config.brushColor = p_color;
-            FillSubMeshColor(_selectedSubmesh, p_meshFilter);
+            FillSubMeshColor(p_meshFilter, _selectedSubmesh, p_color);
         }
         
         void FillColorOnHit(RaycastHit p_hit, MeshFilter p_meshFilter)
@@ -86,7 +86,7 @@ namespace VertexColorPainter.Editor
             EditorUtility.SetDirty(p_meshFilter);
         }
         
-        void FillSubMeshColor(int p_submeshIndex, MeshFilter p_meshFilter)
+        void FillSubMeshColor(MeshFilter p_meshFilter, int p_submeshIndex, Color p_color)
         {
             Undo.RegisterCompleteObjectUndo(p_meshFilter.sharedMesh, "Fill Color");
             Mesh mesh = p_meshFilter.sharedMesh;
@@ -98,12 +98,12 @@ namespace VertexColorPainter.Editor
 
                 for (int j = 0; j < desc.indexCount; j++)
                 {
-                    Core.CachedColors[triangles[desc.indexStart + j]] = Core.Config.brushColor;
+                    Core.CachedColors[triangles[desc.indexStart + j]] = p_color;
                 }
             }
             else
             {
-                Core.CachedColors = Enumerable.Repeat(Core.Config.brushColor, Core.CachedColors.Length).ToArray();
+                Core.CachedColors = Enumerable.Repeat(p_color, Core.CachedColors.Length).ToArray();
             }
             
             mesh.colors = Core.CachedColors;
@@ -127,7 +127,7 @@ namespace VertexColorPainter.Editor
             {
                 if (Core.Config.autoFill)
                 {
-                    FillSubMeshColor(_selectedSubmesh, Core.PaintedMesh);
+                    FillSubMeshColor(Core.PaintedMesh, _selectedSubmesh, Core.Config.brushColor);
                 }
             }
 
@@ -147,6 +147,33 @@ namespace VertexColorPainter.Editor
                         Core.Config.brushColor = Core.SubmeshColors[i];
                         _selectedSubmesh = i;
                     });
+                }
+            }
+            
+            GUILayout.Space(space);
+            var renderer = Core.PaintedMesh.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                bool but = false;
+                if (GUILayout.Button("Material Color Fill"))
+                {
+                    for (int i = 0; i < Core.PaintedMesh.sharedMesh.subMeshCount; i++)
+                    {
+                        Color color = renderer.sharedMaterials.Length > i ? renderer.sharedMaterials[i].color : Color.white;
+                        FillSubMeshColor(Core.PaintedMesh, i, color);
+                    }
+
+                    if (Core.Config.vertexColorMaterial != null)
+                    {
+                        var materials = new Material[Core.PaintedMesh.sharedMesh.subMeshCount];
+
+                        for (int i = 0; i < Core.PaintedMesh.sharedMesh.subMeshCount; i++)
+                        {
+                            materials[i] = Core.Config.vertexColorMaterial;
+                        }
+
+                        renderer.sharedMaterials = materials;
+                    }
                 }
             }
         }

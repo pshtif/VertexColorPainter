@@ -13,51 +13,47 @@ using VertexColorPainter.Runtime;
 
 namespace VertexColorPainter.Editor
 {
-    [CustomEditor(typeof(VCPMeshFilter))]
+    [CustomEditor(typeof(VCPAsset))]
     public class VCPMeshFilterEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
-            VCPMeshFilter pmf = (target as VCPMeshFilter);
+            VCPAsset asset = (target as VCPAsset);
             
             var style = new GUIStyle();
-            style.normal.textColor = new Color(1, 0.5f, 0);
-            style.fontStyle = FontStyle.Bold;
-            style.alignment = TextAnchor.MiddleCenter;
-            style.fontSize = 14;
-            EditorGUILayout.LabelField("MeshFilter driven by internal painted data.", style);
-            
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Original: ", GUILayout.Width(70));
             style.normal.textColor = Color.white;
             style.fontSize = 12;
             style.fontStyle = FontStyle.Italic;
             style.alignment = TextAnchor.MiddleRight;
-            EditorGUILayout.LabelField(pmf.fbxAssetPath, style);
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Original: ", GUILayout.Width(70));
+
+            EditorGUILayout.LabelField(asset.fbxAssetPath, style);
             EditorGUILayout.EndHorizontal();
             
             if (GUILayout.Button("Go to original asset"))
             {
-                EditorGUIUtility.PingObject(AssetDatabase.LoadAssetAtPath<Mesh>(pmf.fbxAssetPath));
+                EditorGUIUtility.PingObject(AssetDatabase.LoadAssetAtPath<Mesh>(asset.fbxAssetPath));
             }
 
             if (GUILayout.Button("Check Vertex Uniqueness"))
             {
-                if (MeshUtils.CheckVertexUniqueness(pmf.filter.sharedMesh))
+                if (MeshUtils.CheckVertexUniqueness(asset.mesh))
                 {
                     EditorUtility.DisplayDialog("Vertex check",
-                        "Vertices on mesh " + pmf.filter.sharedMesh.name + " are unique.", "OK");
+                        "Vertices on mesh " + asset.mesh.name + " are unique.", "OK");
                 }
                 else
                 {
                     EditorUtility.DisplayDialog("Vertex check",
-                        "Vertices on mesh " + pmf.filter.sharedMesh.name + " are NOT unique.", "OK");
+                        "Vertices on mesh " + asset.mesh.name + " are NOT unique.", "OK");
                 }
             }
             
             if (GUILayout.Button("Open Reimport", GUILayout.Height(32)))
             {
-                ReimportWindow.InitReimportWindow(pmf);
+                ReimportWindow.InitReimportWindow(asset);
             }
         }
     }

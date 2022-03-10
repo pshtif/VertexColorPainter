@@ -27,7 +27,7 @@ namespace VertexColorPainter.Editor
             {
                 if (_vertexColorMaterial == null)
                 {
-                    _vertexColorMaterial = new Material(Shader.Find("Hidden/VertexColorPainter/VertexColorShader"));
+                    _vertexColorMaterial = new Material(Shader.Find("Hidden/Vertex Color Painter/VertexColorShader"));
                 }
 
                 return _vertexColorMaterial;
@@ -41,7 +41,7 @@ namespace VertexColorPainter.Editor
             {
                 if (_selectionMaterial == null)
                 {
-                    _selectionMaterial = new Material(Shader.Find("Hidden/VertexColorPainter/SelectionShader"));
+                    _selectionMaterial = new Material(Shader.Find("Hidden/Vertex Color Painter/SelectionShader"));
                 }
 
                 return _selectionMaterial;
@@ -269,34 +269,33 @@ namespace VertexColorPainter.Editor
             _meshIsolationEnabled = Config.autoMeshIsolation;
             SceneView.duringSceneGui += OnSceneGUI;
 
-            if (_paintedMesh.gameObject.GetComponent<VCPMeshFilter>() == null)
-            {
-                //if (AssetDatabase.Contains(_paintedMesh.sharedMesh))
-                //{
-                    Mesh tempMesh = (Mesh)UnityEngine.Object.Instantiate(_paintedMesh.sharedMesh);
-                
-                    var path = AssetDatabase.GetAssetPath(_paintedMesh.sharedMesh);
-                    path = path.ToLower();
-                    if (path.EndsWith(".fbx"))
-                    {
-                    //     if (EditorUtility.DisplayDialog("Mesh Changes", "Do you want to export modified mesh as asset?",
-                    //         "Export", "No"))
-                    //     {
-                    var name = path.Substring(0, path.Length - 4).Substring(path.LastIndexOf("/") + 1) + "_" +
-                               _paintedMesh.sharedMesh.name;
-                        path = path.Substring(0, path.LastIndexOf("/") + 1) + name + "_painted.asset";
-                        MeshUtility.Optimize(tempMesh);
-                        AssetDatabase.CreateAsset(tempMesh, path);
-                        AssetDatabase.SaveAssets();
-                    //     }
-                    }
+            SaveToSeparateAssetIfNeeded();
+        }
 
-                    VCPMeshFilter pmf = _paintedMesh.gameObject.AddComponent<VCPMeshFilter>();
-                    pmf.SetOriginalAsset(_paintedMesh.sharedMesh);
-                    
-                    _paintedMesh.sharedMesh = tempMesh;
-                //}
-            }
+        private void SaveToSeparateAssetIfNeeded()
+        {
+            var path = AssetDatabase.GetAssetPath(_paintedMesh.sharedMesh);
+            path = path.ToLower();
+            if (!path.EndsWith(".fbx"))
+                return;
+
+            Mesh tempMesh = (Mesh)UnityEngine.Object.Instantiate(_paintedMesh.sharedMesh);
+            MeshUtility.Optimize(tempMesh);
+            
+            var name = path.Substring(0, path.Length - 4).Substring(path.LastIndexOf("/") + 1) + "_" +
+                       _paintedMesh.sharedMesh.name;
+            path = path.Substring(0, path.LastIndexOf("/") + 1) + name + "_painted.asset";
+            tempMesh.name = name + "_painted";
+
+            var asset = ScriptableObject.CreateInstance<VCPAsset>();
+            asset.mesh = tempMesh;
+            asset.SetOriginalAsset(_paintedMesh.sharedMesh);
+            
+            AssetDatabase.CreateAsset(asset, path);
+            AssetDatabase.AddObjectToAsset(tempMesh, asset);
+            AssetDatabase.SaveAssets();
+
+            _paintedMesh.sharedMesh = tempMesh;
         }
 
         private void Frame()

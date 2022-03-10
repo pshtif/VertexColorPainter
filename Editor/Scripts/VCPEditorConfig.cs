@@ -53,6 +53,8 @@ namespace VertexColorPainter.Editor
 
         public float forcedMaxBrushSize = 10f;
 
+        public Material vertexColorMaterial;
+
         public static VCPEditorConfig Create()
         {
             var config = (VCPEditorConfig)AssetDatabase.LoadAssetAtPath(

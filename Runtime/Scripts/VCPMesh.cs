@@ -2,13 +2,12 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using System;
 using UnityEditor;
 using UnityEngine;
 
 namespace VertexColorPainter.Runtime
 {
-    public class VCPMeshFilter : MonoBehaviour
+    public class VCPMesh : MonoBehaviour
     {
         private MeshFilter _filter;
         

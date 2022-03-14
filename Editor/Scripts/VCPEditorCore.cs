@@ -27,7 +27,7 @@ namespace VertexColorPainter.Editor
             {
                 if (_vertexColorMaterial == null)
                 {
-                    _vertexColorMaterial = new Material(Shader.Find("Hidden/VertexColorPainter/VertexColorShader"));
+                    _vertexColorMaterial = new Material(Shader.Find("Hidden/Vertex Color Painter/VertexColorShader"));
                 }
 
                 return _vertexColorMaterial;
@@ -41,7 +41,7 @@ namespace VertexColorPainter.Editor
             {
                 if (_selectionMaterial == null)
                 {
-                    _selectionMaterial = new Material(Shader.Find("Hidden/VertexColorPainter/SelectionShader"));
+                    _selectionMaterial = new Material(Shader.Find("Hidden/Vertex Color Painter/SelectionShader"));
                 }
 
                 return _selectionMaterial;
@@ -269,34 +269,47 @@ namespace VertexColorPainter.Editor
             _meshIsolationEnabled = Config.autoMeshIsolation;
             SceneView.duringSceneGui += OnSceneGUI;
 
-            if (_paintedMesh.gameObject.GetComponent<VCPMeshFilter>() == null)
-            {
-                //if (AssetDatabase.Contains(_paintedMesh.sharedMesh))
-                //{
-                    Mesh tempMesh = (Mesh)UnityEngine.Object.Instantiate(_paintedMesh.sharedMesh);
-                
-                    var path = AssetDatabase.GetAssetPath(_paintedMesh.sharedMesh);
-                    path = path.ToLower();
-                    if (path.EndsWith(".fbx"))
-                    {
-                    //     if (EditorUtility.DisplayDialog("Mesh Changes", "Do you want to export modified mesh as asset?",
-                    //         "Export", "No"))
-                    //     {
-                    var name = path.Substring(0, path.Length - 4).Substring(path.LastIndexOf("/") + 1) + "_" +
-                               _paintedMesh.sharedMesh.name;
-                        path = path.Substring(0, path.LastIndexOf("/") + 1) + name + "_painted.asset";
-                        MeshUtility.Optimize(tempMesh);
-                        AssetDatabase.CreateAsset(tempMesh, path);
-                        AssetDatabase.SaveAssets();
-                    //     }
-                    }
+            _paintedMesh.sharedMesh = SaveToVCPAsset(_paintedMesh.sharedMesh, AssetDatabase.GetAssetPath(_paintedMesh.sharedMesh));
+        }
 
-                    VCPMeshFilter pmf = _paintedMesh.gameObject.AddComponent<VCPMeshFilter>();
-                    pmf.SetOriginalAsset(_paintedMesh.sharedMesh);
-                    
-                    _paintedMesh.sharedMesh = tempMesh;
-                //}
+        public Mesh SaveToVCPAsset(Mesh p_mesh, string p_path = null)
+        {
+            VCPAsset asset = AssetDatabase.LoadAssetAtPath<VCPAsset>(p_path);
+
+            // If it is already VCPAsset abort
+            if (asset != null)
+                return p_mesh;
+
+            Mesh tempMesh = (Mesh)UnityEngine.Object.Instantiate(p_mesh);
+            MeshUtility.Optimize(tempMesh);
+
+            if (!String.IsNullOrEmpty(p_path))
+            {
+                p_path = p_path.ToLower();
+                var name = p_path.Substring(0, p_path.Length - 4).Substring(p_path.LastIndexOf("/") + 1) + "_" +
+                           p_mesh.name;
+                p_path = p_path.Substring(0, p_path.LastIndexOf("/") + 1) + name + "_painted.asset";
+                tempMesh.name = name + "_painted";
             }
+            else
+            {
+                if (!AssetDatabase.IsValidFolder("Assets/Painted"))
+                {
+                    AssetDatabase.CreateFolder("Assets", "Painted");
+                }
+                p_path = "Assets/Painted/"+p_mesh.name + ".asset";
+                tempMesh.name = p_mesh.name;
+            }
+            
+            asset = ScriptableObject.CreateInstance<VCPAsset>();
+            asset.mesh = tempMesh;
+            //asset.SetOriginalAsset(p_mesh);
+            
+            AssetDatabase.CreateAsset(asset, p_path);
+            AssetDatabase.AddObjectToAsset(tempMesh, asset);
+            AssetDatabase.SaveAssets();
+
+            return tempMesh;
         }
 
         private void Frame()

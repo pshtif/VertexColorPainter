@@ -2,7 +2,7 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-Shader "Hidden/VertexColorPainter/VertexColorShader"
+Shader "Hidden/Vertex Color Painter/VertexColorShader"
 {
     Properties
     {

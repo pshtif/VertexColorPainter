@@ -16,7 +16,7 @@ namespace VertexColorPainter.Editor
     {
         private Mesh _importedMesh;
         
-        private VCPMeshFilter _vcpMesh;
+        private PaintedMeshFilter _paintedMeshFilter;
         
         private ReorderableList _importedSubMeshList;
         

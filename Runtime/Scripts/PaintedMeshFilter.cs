@@ -2,13 +2,12 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using System;
 using UnityEditor;
 using UnityEngine;
 
 namespace VertexColorPainter.Runtime
 {
-    public class VCPMeshFilter : MonoBehaviour
+    public class PaintedMeshFilter : MonoBehaviour
     {
         private MeshFilter _filter;
         
@@ -44,7 +43,7 @@ namespace VertexColorPainter.Runtime
                 return AssetDatabase.GUIDToAssetPath(_fbxGuid);
             }
         }
-        
+
         public void SetOriginalAsset(Mesh p_mesh)
         {
             if (AssetDatabase.Contains(p_mesh))

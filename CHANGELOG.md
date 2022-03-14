@@ -4,7 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
-### Release 0.3.0
+### Release 0.4.0 - 14.3.2022
+
+### Added
+
+- Color pick for Fill tool
+- Color pick now supports transformed objects with worldToLocal handling
+- More UI help texts
+
+### Changed
+
+- PaintedMeshFilter component is obsolete and will be removed
+- Reimporting and mesh handling is now moved to asset object
+- Assets are now saved inside a VCPAsset scriptable object
+
+### Release 0.3.0 - 10.3.2022
 
 ### Added
 

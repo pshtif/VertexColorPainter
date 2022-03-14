@@ -4,12 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
-### Release 0.3.0 - 14.3.2022
+### Release 0.4.0 - 14.3.2022
+
+### Added
+
+- Color pick for Fill tool
+- Color pick now supports transformed objects with worldToLocal handling
+- More UI help texts
+
+### Changed
+
+- PaintedMeshFilter component is obsolete and will be removed
+- Reimporting and mesh handling is now moved to asset object
+- Assets are now saved inside a VCPAsset scriptable object
+
+### Release 0.3.0 - 10.3.2022
 
 ### Added
 
 - Added support to enable closes point paint (automatically paints closest vertex to hit point even outside of brushsize bounds)
-- Color pick for Paint and Fill tool
+- Color pick for Paint tool
 - Color pick now supports transformed objects with worldToLocal handling
 - Added on screen help text for tooling
 
@@ -18,9 +32,6 @@ All notable changes to this project will be documented in this file.
 - Removed mesh isolation due to issues on some platforms and gizmo handling in this mode
 - Optimizations in fill tool
 - More refactoring through codebase
-- PaintedMeshFilter component is obsolete and will be removed
-- Reimporting and mesh handling is now moved to asset object
-- Assets are now saved inside a VCPAsset scriptable object
 
 ### Release 0.2.1 - 8.3.2022
 

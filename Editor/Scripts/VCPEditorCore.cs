@@ -269,33 +269,47 @@ namespace VertexColorPainter.Editor
             _meshIsolationEnabled = Config.autoMeshIsolation;
             SceneView.duringSceneGui += OnSceneGUI;
 
-            SaveToSeparateAssetIfNeeded();
+            _paintedMesh.sharedMesh = SaveToVCPAsset(_paintedMesh.sharedMesh, AssetDatabase.GetAssetPath(_paintedMesh.sharedMesh));
         }
 
-        private void SaveToSeparateAssetIfNeeded()
+        public Mesh SaveToVCPAsset(Mesh p_mesh, string p_path = null)
         {
-            var path = AssetDatabase.GetAssetPath(_paintedMesh.sharedMesh);
-            path = path.ToLower();
-            if (!path.EndsWith(".fbx"))
-                return;
+            VCPAsset asset = AssetDatabase.LoadAssetAtPath<VCPAsset>(p_path);
 
-            Mesh tempMesh = (Mesh)UnityEngine.Object.Instantiate(_paintedMesh.sharedMesh);
+            // If it is already VCPAsset abort
+            if (asset != null)
+                return p_mesh;
+
+            Mesh tempMesh = (Mesh)UnityEngine.Object.Instantiate(p_mesh);
             MeshUtility.Optimize(tempMesh);
-            
-            var name = path.Substring(0, path.Length - 4).Substring(path.LastIndexOf("/") + 1) + "_" +
-                       _paintedMesh.sharedMesh.name;
-            path = path.Substring(0, path.LastIndexOf("/") + 1) + name + "_painted.asset";
-            tempMesh.name = name + "_painted";
 
-            var asset = ScriptableObject.CreateInstance<VCPAsset>();
-            asset.mesh = tempMesh;
-            asset.SetOriginalAsset(_paintedMesh.sharedMesh);
+            if (!String.IsNullOrEmpty(p_path))
+            {
+                p_path = p_path.ToLower();
+                var name = p_path.Substring(0, p_path.Length - 4).Substring(p_path.LastIndexOf("/") + 1) + "_" +
+                           p_mesh.name;
+                p_path = p_path.Substring(0, p_path.LastIndexOf("/") + 1) + name + "_painted.asset";
+                tempMesh.name = name + "_painted";
+            }
+            else
+            {
+                if (!AssetDatabase.IsValidFolder("Assets/Painted"))
+                {
+                    AssetDatabase.CreateFolder("Assets", "Painted");
+                }
+                p_path = "Assets/Painted/"+p_mesh.name + ".asset";
+                tempMesh.name = p_mesh.name;
+            }
             
-            AssetDatabase.CreateAsset(asset, path);
+            asset = ScriptableObject.CreateInstance<VCPAsset>();
+            asset.mesh = tempMesh;
+            //asset.SetOriginalAsset(p_mesh);
+            
+            AssetDatabase.CreateAsset(asset, p_path);
             AssetDatabase.AddObjectToAsset(tempMesh, asset);
             AssetDatabase.SaveAssets();
 
-            _paintedMesh.sharedMesh = tempMesh;
+            return tempMesh;
         }
 
         private void Frame()

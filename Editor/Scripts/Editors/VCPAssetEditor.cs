@@ -14,7 +14,7 @@ using VertexColorPainter.Runtime;
 namespace VertexColorPainter.Editor
 {
     [CustomEditor(typeof(VCPAsset))]
-    public class VCPMeshFilterEditor : UnityEditor.Editor
+    public class VCPAssetEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
@@ -26,16 +26,16 @@ namespace VertexColorPainter.Editor
             style.fontStyle = FontStyle.Italic;
             style.alignment = TextAnchor.MiddleRight;
 
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Original: ", GUILayout.Width(70));
+            //EditorGUILayout.BeginHorizontal();
+            //EditorGUILayout.LabelField("Original: ", GUILayout.Width(70));
 
-            EditorGUILayout.LabelField(asset.fbxAssetPath, style);
-            EditorGUILayout.EndHorizontal();
-            
-            if (GUILayout.Button("Go to original asset"))
-            {
-                EditorGUIUtility.PingObject(AssetDatabase.LoadAssetAtPath<Mesh>(asset.fbxAssetPath));
-            }
+            // EditorGUILayout.LabelField(asset.fbxAssetPath, style);
+            // EditorGUILayout.EndHorizontal();
+            //
+            // if (GUILayout.Button("Go to original asset"))
+            // {
+            //     EditorGUIUtility.PingObject(AssetDatabase.LoadAssetAtPath<Mesh>(asset.fbxAssetPath));
+            // }
 
             if (GUILayout.Button("Check Vertex Uniqueness"))
             {

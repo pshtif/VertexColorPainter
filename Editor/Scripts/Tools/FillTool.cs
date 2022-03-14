@@ -151,10 +151,9 @@ namespace VertexColorPainter.Editor
             }
             
             GUILayout.Space(space);
-            var renderer = Core.PaintedMesh.GetComponent<MeshRenderer>();
+            var renderer = Core.PaintedMesh?.GetComponent<MeshRenderer>();
             if (renderer != null)
             {
-                bool but = false;
                 if (GUILayout.Button("Material Color Fill"))
                 {
                     for (int i = 0; i < Core.PaintedMesh.sharedMesh.subMeshCount; i++)

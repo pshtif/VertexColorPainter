@@ -19,12 +19,12 @@ namespace VertexColorPainter.Editor
 
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseDown)
             {
-                Undo.RegisterCompleteObjectUndo(Core.PaintedMesh.sharedMesh, "Paint Color");
+                Undo.RegisterCompleteObjectUndo(Core.PaintedMesh, "Paint Color");
             }
 
             if (Event.current.control)
             {
-                int index = MeshUtils.GetClosesVertexIndex(Core.PaintedMesh.sharedMesh, Core.PaintedMesh.transform.worldToLocalMatrix, p_hit);
+                int index = MeshUtils.GetClosesVertexIndex(Core.PaintedMesh, Core.PaintedObject.transform.worldToLocalMatrix, p_hit);
                 _pickedColor = Core.CachedColors[index];
             }
             else
@@ -47,12 +47,13 @@ namespace VertexColorPainter.Editor
 
             if (Event.current.button == 0 && !Event.current.alt && Event.current.type == EventType.MouseUp)
             {
-                EditorUtility.SetDirty(Core.PaintedMesh);
+                EditorUtility.SetDirty(Core.PaintedObject);
             }
         }
 
         void DrawHandle(RaycastHit p_hit)
         {
+            Debug.Log(p_hit.point);
             Handles.color = Color.white;
             var gizmoSize = HandleUtility.GetHandleSize(p_hit.point) / 10f;
             Handles.DrawSolidDisc(p_hit.point, p_hit.normal, gizmoSize * Core.Config.brushSize + gizmoSize / 5);
@@ -66,12 +67,11 @@ namespace VertexColorPainter.Editor
                 return;
             
             var brushSize = HandleUtility.GetHandleSize(p_hit.point) / 10f * Core.Config.brushSize;
-            int closestIndex = MeshUtils.GetClosesVertexIndex(Core.PaintedMesh.sharedMesh, Core.PaintedMesh.transform.worldToLocalMatrix, p_hit);
+            int closestIndex = MeshUtils.GetClosesVertexIndex(Core.PaintedMesh, Core.PaintedObject.transform.worldToLocalMatrix, p_hit);
 
             if (Core.Config.lockToSubmesh)
             {
-                Mesh mesh = Core.PaintedMesh.sharedMesh;
-                SubMeshDescriptor desc = mesh.GetSubMesh(_selectedSubmesh);
+                SubMeshDescriptor desc = Core.PaintedMesh.GetSubMesh(_selectedSubmesh);
                 
                 for (int i = 0; i < desc.indexCount; i++)
                 {
@@ -95,7 +95,7 @@ namespace VertexColorPainter.Editor
                 }
             }
 
-            Core.PaintedMesh.sharedMesh.colors = Core.CachedColors;
+            Core.PaintedMesh.colors = Core.CachedColors;
         }
 
         public override void DrawGUI(SceneView p_sceneView)

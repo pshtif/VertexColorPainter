@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.5.0 - 30.3.2022
+
+### Added
+
+- Support for skinned meshes
+
+### Changed
+
+- Refactoring of huge parts to add skinned mesh support
+- Changed editor raycasting implementation to avoid internal Unity bug that resulted in rendering glitches on MacOS
+
 ### Release 0.4.0 - 14.3.2022
 
 ### Added

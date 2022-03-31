@@ -107,7 +107,21 @@ namespace VertexColorPainter.Editor
             p_transform = null;
             p_mesh = null;
 
-            MeshFilter[] meshes = GameObject.FindObjectsOfType<MeshFilter>();
+            MeshFilter[] meshes;
+            if (p_filter != null)
+            {
+                meshes = new MeshFilter[0];
+                foreach (var gameObject in p_filter)
+                {
+                    meshes = meshes.Concat(gameObject.GetComponentsInChildren<MeshFilter>()).ToArray();
+                }
+
+                meshes = p_filter[0].GetComponentsInChildren<MeshFilter>();
+            }
+            else
+            {
+                meshes = GameObject.FindObjectsOfType<MeshFilter>();
+            }
 
             Ray mouseRay = HandleUtility.GUIPointToWorldRay(p_position);
 

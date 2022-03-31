@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.5.1 - 31.3.2022
+
+### Changed
+
+- Changed the new editor raycasting to support gameobject filtering
+
 ### Release 0.5.0 - 30.3.2022
 
 ### Added

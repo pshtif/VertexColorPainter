@@ -108,7 +108,7 @@ namespace VertexColorPainter.Editor
             if (!Config.enabled)
                 return;
             
-            if (_paintedMesh != null)
+            if (_paintedObject != null && _paintedMesh != null)
             {
                 // if (Selection.activeGameObject != _paintedMesh.gameObject)
                 //     Selection.activeGameObject = _paintedMesh.gameObject;
@@ -143,7 +143,14 @@ namespace VertexColorPainter.Editor
             }
             else
             {
-                DrawEnabledGUI(p_sceneView);
+                if (_paintedObject != null)
+                {
+                    DrawEnabledGUI(p_sceneView);
+                }
+                else
+                {
+                    DisablePainting();
+                }
             }
         }
 
@@ -198,6 +205,7 @@ namespace VertexColorPainter.Editor
             if (GUILayout.Button("Disable Painting", GUILayout.Width(120)))
             {
                 DisablePainting();
+                return;
             }
             
             GUILayout.Space(space);
@@ -231,6 +239,19 @@ namespace VertexColorPainter.Editor
             GUILayout.EndArea();
             
             _currentTool.DrawHelpGUI(p_sceneView);
+            
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 500, rect.height-75, 1000, 30));
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            var s = new GUIStyle();
+            s.normal.textColor = Color.white;
+            GUILayout.Label("Painting object: ", s);
+            s.normal.textColor = Color.green;
+            s.fontStyle = FontStyle.Bold;
+            GUILayout.Label(_paintedObject.name,s);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
             
             Handles.EndGUI();
         }

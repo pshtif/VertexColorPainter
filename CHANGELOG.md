@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.5.2 - 5.4.2022
+
+### Added
+
+- Added now showing the info which object I am paiting.
+
+### Fixed
+
+- Fixed issues when object gets destroyed when going out of scene/prefab without disabling painting.
+
 ### Release 0.5.1 - 31.3.2022
 
 ### Changed

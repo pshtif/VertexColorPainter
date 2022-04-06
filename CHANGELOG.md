@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.5.2 - 5.4.2022
+
+### Added
+
+- Added now showing the info which object I am paiting.
+
+### Fixed
+
+- Fixed issues when object gets destroyed when going out of scene/prefab without disabling painting.
+
+### Release 0.5.1 - 31.3.2022
+
+### Changed
+
+- Changed the new editor raycasting to support gameobject filtering
+
+### Release 0.5.0 - 30.3.2022
+
+### Added
+
+- Support for skinned meshes
+
+### Changed
+
+- Refactoring of huge parts to add skinned mesh support
+- Changed editor raycasting implementation to avoid internal Unity bug that resulted in rendering glitches on MacOS
+
 ### Release 0.4.0 - 14.3.2022
 
 ### Added

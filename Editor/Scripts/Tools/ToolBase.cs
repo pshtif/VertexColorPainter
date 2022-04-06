@@ -24,11 +24,13 @@ namespace VertexColorPainter.Editor
             {
                 RaycastMouse(p_sceneView);
             }
-
-            if (_mouseHitTransform != Core.PaintedMesh.transform)
+            
+            if (_mouseHitTransform != Core.PaintedObject.transform)
                 return;
             
             HandleMouseHitInternal(_mouseRaycastHit, _mouseHitTransform);
+            
+            p_sceneView.Repaint();
         }
         
         void RaycastMouse(SceneView p_sceneView)
@@ -36,7 +38,7 @@ namespace VertexColorPainter.Editor
             RaycastHit hit;
 
             if (EditorRaycast.RaycastWorld(Event.current.mousePosition, out hit, out _mouseHitTransform,
-                out _mouseHitMesh, null, new [] {Core.PaintedMesh.gameObject}))
+                out _mouseHitMesh, null, new [] {Core.PaintedObject}))
             {
                 _mouseRaycastHit = hit;
             }

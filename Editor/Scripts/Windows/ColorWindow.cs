@@ -58,11 +58,9 @@ namespace VertexColorPainter.Editor
             }
         }
         
-        void ChangeMeshColor(MeshFilter p_meshFilter, Color p_oldColor, Color p_newColor)
+        void ChangeMeshColor(Mesh p_mesh, Color p_oldColor, Color p_newColor)
         {
-            Mesh mesh = p_meshFilter.sharedMesh;
-
-            for (int i = 0; i < mesh.vertexCount; i++)
+            for (int i = 0; i < p_mesh.vertexCount; i++)
             {
                 if (VCPEditorCore.Instance.CachedColors[i] == p_oldColor)
                 {
@@ -70,9 +68,9 @@ namespace VertexColorPainter.Editor
                 }
             }
 
-            mesh.colors = VCPEditorCore.Instance.CachedColors;
+            p_mesh.colors = VCPEditorCore.Instance.CachedColors;
 
-            EditorUtility.SetDirty(p_meshFilter);
+            EditorUtility.SetDirty(VCPEditorCore.Instance.PaintedObject);
         }
     }
 }

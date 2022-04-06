@@ -12,7 +12,7 @@ namespace VertexColorPainter.Editor
     [InitializeOnLoad]
     public class VCPEditorCore
     {
-        const string VERSION = "0.3.0";
+        const string VERSION = "0.4.0";
         
         public GUISkin Skin => (GUISkin)Resources.Load("Skins/VertexColorPainterSkin");
         
@@ -55,8 +55,13 @@ namespace VertexColorPainter.Editor
 
         public VCPEditorConfig Config { get; private set; }
 
-        private MeshFilter _paintedMesh;
-        public MeshFilter PaintedMesh => _paintedMesh;
+        private PaintedMeshType _paintedType;
+        
+        private Mesh _paintedMesh;
+        public Mesh PaintedMesh => _paintedMesh;
+
+        private GameObject _paintedObject;
+        public GameObject PaintedObject => _paintedObject;
 
         // Caches
         public int[] CachedIndices { get; private set; }
@@ -65,7 +70,7 @@ namespace VertexColorPainter.Editor
         public List<Color> SubmeshColors { get; private set; }
         public List<string> SubmeshNames { get; private set; }
         private string[] _cachedBrushTypeNames;
-        
+
         private bool _meshIsolationEnabled = false;
 
         private ToolBase _currentTool;
@@ -91,10 +96,10 @@ namespace VertexColorPainter.Editor
             if (_paintedMesh == null || !Config.enabled)
                 return;
 
-            _paintedMesh.sharedMesh.colors = _paintedMesh.sharedMesh.colors;
-            CachedColors = _paintedMesh.sharedMesh.colors;
+            _paintedMesh.colors = _paintedMesh.colors;
+            CachedColors = _paintedMesh.colors;
             
-            EditorUtility.SetDirty(_paintedMesh.sharedMesh);
+            EditorUtility.SetDirty(_paintedMesh);
             SceneView.RepaintAll();
         }
 
@@ -102,8 +107,8 @@ namespace VertexColorPainter.Editor
         {
             if (!Config.enabled)
                 return;
-
-            if (_paintedMesh != null)
+            
+            if (_paintedObject != null && _paintedMesh != null)
             {
                 // if (Selection.activeGameObject != _paintedMesh.gameObject)
                 //     Selection.activeGameObject = _paintedMesh.gameObject;
@@ -115,9 +120,9 @@ namespace VertexColorPainter.Editor
 
                 var rect = p_sceneView.camera.GetScaledPixelRect();
                 rect = new Rect(0, rect.height - 30, rect.width, 30);
-
+                
                 // Don't draw tool under gui
-                if (!rect.Contains(Event.current.mousePosition))
+                //if (!rect.Contains(Event.current.mousePosition))
                 {
                     _currentTool?.HandleMouseHit(p_sceneView);
                 }
@@ -130,14 +135,22 @@ namespace VertexColorPainter.Editor
         {
             if (_paintedMesh == null)
             {
-                if (Selection.activeGameObject?.GetComponent<MeshFilter>() != null)
+                if (Selection.activeGameObject?.GetComponent<MeshFilter>() != null ||
+                    Selection.activeGameObject?.GetComponent<SkinnedMeshRenderer>() != null) 
                 {
                     DrawDisabledGUI(p_sceneView);
                 }
             }
             else
             {
-                DrawEnabledGUI(p_sceneView);
+                if (_paintedObject != null)
+                {
+                    DrawEnabledGUI(p_sceneView);
+                }
+                else
+                {
+                    DisablePainting();
+                }
             }
         }
 
@@ -150,7 +163,7 @@ namespace VertexColorPainter.Editor
             
             if (GUI.Button(new Rect(5, rect.height - 25, 120, 20), "Enable Paiting"))
             {
-                EnablePainting(Selection.activeGameObject.GetComponent<MeshFilter>());
+                EnablePainting(Selection.activeGameObject);
             }
             
             Handles.EndGUI();
@@ -192,6 +205,7 @@ namespace VertexColorPainter.Editor
             if (GUILayout.Button("Disable Painting", GUILayout.Width(120)))
             {
                 DisablePainting();
+                return;
             }
             
             GUILayout.Space(space);
@@ -226,6 +240,19 @@ namespace VertexColorPainter.Editor
             
             _currentTool.DrawHelpGUI(p_sceneView);
             
+            GUILayout.BeginArea(new Rect(rect.width / 2 - 500, rect.height-75, 1000, 30));
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            var s = new GUIStyle();
+            s.normal.textColor = Color.white;
+            GUILayout.Label("Painting object: ", s);
+            s.normal.textColor = Color.green;
+            s.fontStyle = FontStyle.Bold;
+            GUILayout.Label(_paintedObject.name,s);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
+            
             Handles.EndGUI();
         }
 
@@ -245,31 +272,56 @@ namespace VertexColorPainter.Editor
             }
         }
 
-        public void EnablePainting(MeshFilter p_meshFilter)
+        public void EnablePainting(GameObject p_object)
         {
+            _paintedObject = p_object;
+            
+            if (_paintedObject.GetComponent<MeshFilter>() != null)
+            {
+                _paintedType = PaintedMeshType.STATIC;
+                _paintedMesh = _paintedObject.GetComponent<MeshFilter>().sharedMesh;
+            } else if (_paintedObject.GetComponent<SkinnedMeshRenderer>() != null)
+            {
+                _paintedType = PaintedMeshType.SKINNED;
+                _paintedMesh = _paintedObject.GetComponent<SkinnedMeshRenderer>().sharedMesh;
+            }
+            else
+            {
+                _paintedType = PaintedMeshType.NONE;
+                return;
+            }
+            
             Config.previousOutlineSetting = AnnotationUtilityUtil.showSelectedOutline;
             AnnotationUtilityUtil.showSelectedOutline = false;
             
-            _paintedMesh = p_meshFilter;
-            var mesh = _paintedMesh.sharedMesh;
-            CachedIndices = mesh.triangles;
-            CachedVertices = mesh.vertices;
-            CachedColors = mesh.colors;
+            CachedIndices = _paintedMesh.triangles;
+            CachedVertices = _paintedMesh.vertices;
+            CachedColors = _paintedMesh.colors;
 
             Config.brushSize = Math.Min(Config.forcedMaxBrushSize, Math.Max(Config.forcedMinBrushSize, Config.brushSize));
 
             EnumerateSubmeshes();
 
-            if (_paintedMesh.GetComponent<MeshRenderer>() && Config.autoMeshFraming)
-            {
-                //_usedFraming = true;
-                Frame();
-            }
+            // if (_paintedMesh.GetComponent<MeshRenderer>() && Config.autoMeshFraming)
+            // {
+            //     //_usedFraming = true;
+            //     Frame();
+            // }
 
             _meshIsolationEnabled = Config.autoMeshIsolation;
             SceneView.duringSceneGui += OnSceneGUI;
+            
+            _paintedMesh = SaveToVCPAsset(_paintedMesh, AssetDatabase.GetAssetPath(_paintedMesh));
 
-            _paintedMesh.sharedMesh = SaveToVCPAsset(_paintedMesh.sharedMesh, AssetDatabase.GetAssetPath(_paintedMesh.sharedMesh));
+            switch (_paintedType)
+            {
+                case PaintedMeshType.STATIC:
+                    _paintedObject.GetComponent<MeshFilter>().sharedMesh = _paintedMesh;
+                    break;
+                case PaintedMeshType.SKINNED:
+                    _paintedObject.GetComponent<SkinnedMeshRenderer>().sharedMesh = _paintedMesh;
+                    break;
+            }
         }
 
         public Mesh SaveToVCPAsset(Mesh p_mesh, string p_path = null)
@@ -316,13 +368,23 @@ namespace VertexColorPainter.Editor
         {
             var view = SceneView.lastActiveSceneView;
             StoreSceneViewCamera(view);
-            view.Frame(_paintedMesh.GetComponent<MeshRenderer>().bounds, false);
+
+            switch (_paintedType)
+            {
+                case PaintedMeshType.STATIC:
+                    view.Frame(_paintedObject.GetComponent<MeshRenderer>().bounds, false);
+                    break;
+                case PaintedMeshType.SKINNED:
+                    view.Frame(_paintedObject.GetComponent<SkinnedMeshRenderer>().bounds, false);
+                    break;
+            }
         }
         
         public void DisablePainting()
         {
             AnnotationUtilityUtil.showSelectedOutline = Config.previousOutlineSetting;
             _paintedMesh = null;
+            _paintedObject = null;
 
             SceneView.duringSceneGui -= OnSceneGUI;
         }
@@ -331,19 +393,18 @@ namespace VertexColorPainter.Editor
         {
             SubmeshColors = new List<Color>();
             SubmeshNames = new List<string>();
-            Mesh mesh = _paintedMesh.sharedMesh;
 
-            if (CachedColors == null || CachedColors.Length < mesh.vertexCount)
+            if (CachedColors == null || CachedColors.Length < _paintedMesh.vertexCount)
             {
-                CachedColors = Enumerable.Repeat(Color.white, mesh.vertexCount).ToArray();
+                CachedColors = Enumerable.Repeat(Color.white, _paintedMesh.vertexCount).ToArray();
             }
 
-            mesh.colors = CachedColors;
+            _paintedMesh.colors = CachedColors;
 
-            for (int i = 0; i < mesh.subMeshCount; i++)
+            for (int i = 0; i < _paintedMesh.subMeshCount; i++)
             {
-                SubMeshDescriptor desc = mesh.GetSubMesh(i);
-                SubmeshColors.Add(CachedColors[mesh.triangles[desc.indexStart]]);
+                SubMeshDescriptor desc = _paintedMesh.GetSubMesh(i);
+                SubmeshColors.Add(CachedColors[_paintedMesh.triangles[desc.indexStart]]);
                 SubmeshNames.Add("Submesh " + i);
             }
         }

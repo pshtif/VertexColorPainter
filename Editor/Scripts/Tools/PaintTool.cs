@@ -53,7 +53,6 @@ namespace VertexColorPainter.Editor
 
         void DrawHandle(RaycastHit p_hit)
         {
-            Debug.Log(p_hit.point);
             Handles.color = Color.white;
             var gizmoSize = HandleUtility.GetHandleSize(p_hit.point) / 10f;
             Handles.DrawSolidDisc(p_hit.point, p_hit.normal, gizmoSize * Core.Config.brushSize + gizmoSize / 5);

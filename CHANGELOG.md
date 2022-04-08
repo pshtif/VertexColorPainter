@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.5.3 - 8.4.2022
+
+### Changed
+
+- Changed reimporting now doesn't construct new mesh but copies data to keep existing scene references
+
+### Fixed
+
+- Fixed reimporting issue not saving assets
+
 ### Release 0.5.2 - 5.4.2022
 
 ### Added

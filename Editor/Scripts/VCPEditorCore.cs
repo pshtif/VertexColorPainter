@@ -12,7 +12,7 @@ namespace VertexColorPainter.Editor
     [InitializeOnLoad]
     public class VCPEditorCore
     {
-        const string VERSION = "0.4.0";
+        const string VERSION = "0.5.3";
         
         public GUISkin Skin => (GUISkin)Resources.Load("Skins/VertexColorPainterSkin");
         

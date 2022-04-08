@@ -1,7 +1,7 @@
 {
   "name": "com.shtif.vertexcolorpainter",
   "displayName": "Vertex Color Painter",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "unity": "2019.4",
   "description": "Tool for paiting vertex color data on meshes in editor.",
   "author": {

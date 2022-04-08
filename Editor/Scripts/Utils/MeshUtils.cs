@@ -43,6 +43,11 @@ namespace VertexColorPainter.Editor
         
         public static Color[] GetSubMeshColors(Mesh p_mesh)
         {
+            if (p_mesh == null)
+            {
+                return new Color[0];
+            }
+
             var p_colors = new Color[p_mesh.subMeshCount];
 
             var cachedColors = p_mesh.colors;

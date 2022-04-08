@@ -27,8 +27,8 @@ namespace VertexColorPainter.Editor
             Instance = GetWindow<ReimportWindow>();
             Instance._vcpAsset = p_asset;
             Instance.titleContent = new GUIContent("Vertex Color Editor Reimport");
-            Instance.minSize = new Vector2(800, p_asset.mesh.subMeshCount * 22 + 165);
-            Instance.maxSize = new Vector2(800, p_asset.mesh.subMeshCount * 22 + 165);
+            Instance.minSize = new Vector2(800, p_asset.mesh == null ? 165 : p_asset.mesh.subMeshCount * 22 + 165);
+            Instance.maxSize = new Vector2(800, p_asset.mesh == null ? 165 : p_asset.mesh.subMeshCount * 22 + 165);
 
             return Instance;
         }
@@ -136,7 +136,7 @@ namespace VertexColorPainter.Editor
             
             _importedSubMeshList.drawElementCallback += DrawListItems;
 
-            var count = Math.Max(_vcpAsset.mesh.subMeshCount, p_subMeshes.Length);
+            var count = Math.Max(_vcpAsset.mesh == null ? 0 : _vcpAsset.mesh.subMeshCount, p_subMeshes.Length);
             
             Instance.minSize = new Vector2(800, count * 22 + 165);
             Instance.maxSize = new Vector2(800, count * 22 + 165);
@@ -155,8 +155,10 @@ namespace VertexColorPainter.Editor
             var originalColors = MeshUtils.GetSubMeshColors(_vcpAsset.mesh);
             
             var newMesh = Instantiate(_importedMesh);
+            newMesh.name = _vcpAsset.name;
             var colors =  newMesh.colors;
             if (colors.Length == 0) colors = new Color[newMesh.vertexCount];
+            
             for (int i = 0; i < _importedSubMeshList.list.Count; i++)
             {
                 for (int j = 0; j < ((SubMeshDescriptor)_importedSubMeshList.list[i]).indexCount; j++)
@@ -165,10 +167,44 @@ namespace VertexColorPainter.Editor
                     colors[index] = i>=originalColors.Length ? Color.white : originalColors[i];
                 }
             }
-
             newMesh.colors = colors;
 
-            _vcpAsset.mesh = newMesh;
+            // If we don't have original mesh (can be malformed)
+            if (_vcpAsset.mesh == null)
+            {
+                var subAssets = AssetDatabase.LoadAllAssetRepresentationsAtPath(AssetDatabase.GetAssetPath(_vcpAsset));
+                foreach (var asset in subAssets)
+                {
+                    if (asset == null)
+                        continue;
+                    
+                    AssetDatabase.RemoveObjectFromAsset(asset);
+                }
+
+                AssetDatabase.SaveAssets();
+
+                _vcpAsset.mesh = newMesh;
+
+                AssetDatabase.AddObjectToAsset(newMesh, _vcpAsset);
+                AssetDatabase.SaveAssets();
+            }
+            // If we have original mesh we don't want to create new asset it would break references to it already made
+            else
+            {
+                _vcpAsset.mesh.bindposes = newMesh.bindposes;
+                _vcpAsset.mesh.normals = newMesh.normals;
+                _vcpAsset.mesh.colors = newMesh.colors;
+                _vcpAsset.mesh.colors32 = newMesh.colors32;
+                _vcpAsset.mesh.vertices = newMesh.vertices;
+                _vcpAsset.mesh.triangles = newMesh.triangles;
+                _vcpAsset.mesh.uv = newMesh.uv;
+                _vcpAsset.mesh.uv2 = newMesh.uv2;
+                for (int i = 0; i < newMesh.subMeshCount; i++)
+                {
+                    _vcpAsset.mesh.subMeshCount = newMesh.subMeshCount;
+                    _vcpAsset.mesh.SetSubMesh(i, newMesh.GetSubMesh(i));
+                }
+            }
         }
     }
 }

@@ -46,7 +46,7 @@ namespace VertexColorPainter.Editor
                 return;
             }
 
-            var uniqueColors = VCPEditorCore.Instance.CachedColors.Distinct();
+            var uniqueColors = VCPEditorCore.Instance.GetAllColors().Distinct();
 
             foreach (var color in uniqueColors)
             {
@@ -62,13 +62,13 @@ namespace VertexColorPainter.Editor
         {
             for (int i = 0; i < p_mesh.vertexCount; i++)
             {
-                if (VCPEditorCore.Instance.CachedColors[i] == p_oldColor)
+                if (VCPEditorCore.Instance.GetColorAtIndex(i) == p_oldColor)
                 {
-                    VCPEditorCore.Instance.CachedColors[i] = p_newColor;
+                    VCPEditorCore.Instance.SetColorAtIndex(i, p_newColor);
                 }
             }
 
-            p_mesh.colors = VCPEditorCore.Instance.CachedColors;
+            VCPEditorCore.Instance.InvalidateMeshColors();
 
             EditorUtility.SetDirty(VCPEditorCore.Instance.PaintedObject);
         }

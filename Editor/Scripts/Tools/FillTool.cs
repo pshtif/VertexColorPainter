@@ -13,18 +13,19 @@ namespace VertexColorPainter.Editor
     {
         private Color _pickedColor;
         
-        public override void HandleMouseHitInternal(RaycastHit p_hit, Transform p_hitTransform)
+        public override void HandleMouseHitInternal(SceneView p_sceneView, RaycastHit p_hit, Transform p_hitTransform)
         {
             if (Event.current.control)
             {
                 int submesh = MeshUtils.GetSubMeshIndexFromTriangle(Core.PaintedMesh, p_hit.triangleIndex);
                 int index = MeshUtils.GetClosesVertexIndex(Core.PaintedMesh, Core.PaintedObject.transform.worldToLocalMatrix, p_hit);
-                _pickedColor = Core.CachedColors[index];
+                _pickedColor = Core.GetColorAtIndex(index);
 
                 if (Core.Config.autoFill)
                 {
-                    Core.SelectionMaterial.SetPass(0);
-                    Graphics.DrawMeshNow(Core.PaintedMesh, Core.PaintedObject.transform.localToWorldMatrix, submesh);
+                    //Core.SelectionMaterial.SetPass(0);
+                    //Graphics.DrawMeshNow(Core.PaintedMesh, Core.PaintedObject.transform.localToWorldMatrix, submesh);
+                    Graphics.DrawMesh(Core.PaintedMesh, Core.PaintedObject.transform.localToWorldMatrix, Core.SelectionMaterial, 0, p_sceneView.camera, submesh);
                 }
 
                 if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
@@ -66,7 +67,7 @@ namespace VertexColorPainter.Editor
         void OnColorChange(Mesh p_mesh, Color p_color)
         {
             Core.Config.brushColor = p_color;
-            FillSubMeshColor(p_mesh, _selectedSubmesh, p_color);
+            FillSubMeshColor(_selectedSubmesh, p_color);
         }
         
         void FillColorOnHit(RaycastHit p_hit, Mesh p_mesh)
@@ -83,39 +84,39 @@ namespace VertexColorPainter.Editor
 
                 for (int j = 0; j < desc.indexCount; j++)
                 {
-                    Core.CachedColors[triangles[desc.indexStart + j]] = Core.Config.brushColor;
+                    Core.SetColorAtIndex(triangles[desc.indexStart + j], Core.Config.brushColor);
                 }
             }
             else
             {
-                Core.CachedColors = Enumerable.Repeat(Core.Config.brushColor, Core.CachedColors.Length).ToArray();
+                Core.SetAllColors(Core.Config.brushColor);
             }
-            
-            p_mesh.colors = Core.CachedColors;
+
+            Core.InvalidateMeshColors();
 
             EditorUtility.SetDirty(Core.PaintedObject);
         }
         
-        void FillSubMeshColor(Mesh p_mesh, int p_submeshIndex, Color p_color)
+        void FillSubMeshColor(int p_submeshIndex, Color p_color)
         {
-            Undo.RegisterCompleteObjectUndo(p_mesh, "Fill Color");
-            var triangles = p_mesh.triangles;
+            Undo.RegisterCompleteObjectUndo(Core.PaintedMesh, "Fill Color");
+            var triangles = Core.PaintedMesh.triangles;
 
-            if (p_mesh.subMeshCount > 1)
+            if (Core.PaintedMesh.subMeshCount > 1)
             {
-                SubMeshDescriptor desc = p_mesh.GetSubMesh(p_submeshIndex);
+                SubMeshDescriptor desc = Core.PaintedMesh.GetSubMesh(p_submeshIndex);
 
                 for (int j = 0; j < desc.indexCount; j++)
                 {
-                    Core.CachedColors[triangles[desc.indexStart + j]] = p_color;
+                    Core.SetColorAtIndex(triangles[desc.indexStart + j], p_color);
                 }
             }
             else
             {
-                Core.CachedColors = Enumerable.Repeat(p_color, Core.CachedColors.Length).ToArray();
+                Core.SetAllColors(p_color);
             }
             
-            p_mesh.colors = Core.CachedColors;
+            Core.InvalidateMeshColors();
 
             EditorUtility.SetDirty(Core.PaintedObject);
         }
@@ -136,7 +137,7 @@ namespace VertexColorPainter.Editor
             {
                 if (Core.Config.autoFill)
                 {
-                    FillSubMeshColor(Core.PaintedMesh, _selectedSubmesh, Core.Config.brushColor);
+                    FillSubMeshColor(_selectedSubmesh, Core.Config.brushColor);
                 }
             }
 
@@ -168,7 +169,7 @@ namespace VertexColorPainter.Editor
                     for (int i = 0; i < Core.PaintedMesh.subMeshCount; i++)
                     {
                         Color color = renderer.sharedMaterials.Length > i ? renderer.sharedMaterials[i].color : Color.white;
-                        FillSubMeshColor(Core.PaintedMesh, i, color);
+                        FillSubMeshColor(i, color);
                     }
 
                     if (Core.Config.vertexColorMaterial != null)

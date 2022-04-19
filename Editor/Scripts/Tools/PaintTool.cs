@@ -13,7 +13,7 @@ namespace VertexColorPainter.Editor
     {
         protected Color _pickedColor;
         
-        public override void HandleMouseHitInternal(RaycastHit p_hit, Transform p_hitTransform)
+        public override void HandleMouseHitInternal(SceneView p_sceneView, RaycastHit p_hit, Transform p_hitTransform)
         {
             DrawHandle(p_hit);
 
@@ -25,7 +25,7 @@ namespace VertexColorPainter.Editor
             if (Event.current.control)
             {
                 int index = MeshUtils.GetClosesVertexIndex(Core.PaintedMesh, Core.PaintedObject.transform.worldToLocalMatrix, p_hit);
-                _pickedColor = Core.CachedColors[index];
+                _pickedColor = Core.GetColorAtIndex(index);
             }
             else
             {
@@ -78,7 +78,7 @@ namespace VertexColorPainter.Editor
                     if (Vector3.Distance(p_hitTransform.TransformPoint(Core.CachedVertices[index]), p_hit.point) <
                         brushSize || (Core.Config.enableClosestPaint && i+desc.indexStart == closestIndex))
                     {
-                        Core.CachedColors[index] = Core.Config.brushColor;
+                        Core.SetColorAtIndex(index, Core.Config.brushColor);
                     }
                 }
             }
@@ -89,12 +89,12 @@ namespace VertexColorPainter.Editor
                     if (Vector3.Distance(p_hitTransform.TransformPoint(Core.CachedVertices[i]), p_hit.point) <
                         brushSize || (Core.Config.enableClosestPaint && i == closestIndex))
                     {
-                        Core.CachedColors[i] = Core.Config.brushColor;
+                        Core.SetColorAtIndex(i, Core.Config.brushColor);
                     }
                 }
             }
 
-            Core.PaintedMesh.colors = Core.CachedColors;
+            Core.InvalidateMeshColors();
         }
 
         public override void DrawGUI(SceneView p_sceneView)

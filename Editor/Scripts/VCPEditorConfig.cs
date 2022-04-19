@@ -18,6 +18,9 @@ namespace VertexColorPainter.Editor
         public bool enableClosestPaint = false;
 
         [HideInInspector]
+        public ChannelType channelType;
+        
+        [HideInInspector]
         public ToolType toolType;
 
         [HideInInspector]
@@ -34,7 +37,11 @@ namespace VertexColorPainter.Editor
 
         [HideInInspector]
         public bool previousOutlineSetting = false;
+
+        [HideInInspector] 
+        public bool enableUv0Editing = false;
         
+        [Obsolete]
         [HideInInspector]
         public bool autoMeshIsolation = false;
 

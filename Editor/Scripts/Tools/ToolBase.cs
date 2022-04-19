@@ -28,7 +28,7 @@ namespace VertexColorPainter.Editor
             if (_mouseHitTransform != Core.PaintedObject.transform)
                 return;
             
-            HandleMouseHitInternal(_mouseRaycastHit, _mouseHitTransform);
+            HandleMouseHitInternal(p_sceneView, _mouseRaycastHit, _mouseHitTransform);
             
             p_sceneView.Repaint();
         }
@@ -44,7 +44,7 @@ namespace VertexColorPainter.Editor
             }
         }
 
-        public abstract void HandleMouseHitInternal(RaycastHit p_hit, Transform p_transform);
+        public abstract void HandleMouseHitInternal(SceneView p_sceneView, RaycastHit p_hit, Transform p_transform);
 
         public abstract void DrawGUI(SceneView p_sceneView);
 

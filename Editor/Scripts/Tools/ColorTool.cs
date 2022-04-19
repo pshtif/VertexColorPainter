@@ -17,7 +17,7 @@ namespace VertexColorPainter.Editor
         private List<int> _cachedColorIndices;
         private Color _pickedColor;
 
-        public override void HandleMouseHitInternal(RaycastHit p_hit, Transform p_hitTransform)
+        public override void HandleMouseHitInternal(SceneView p_sceneView, RaycastHit p_hit, Transform p_hitTransform)
         {
             if (_lastCachedMesh != Core.PaintedMesh)
             {
@@ -27,7 +27,7 @@ namespace VertexColorPainter.Editor
             if (Event.current.control)
             {
                 int index = MeshUtils.GetClosesVertexIndex(Core.PaintedMesh, Core.PaintedObject.transform.worldToLocalMatrix, p_hit);
-                _pickedColor = Core.CachedColors[index];
+                _pickedColor = Core.GetColorAtIndex(index);
                 int submesh = MeshUtils.GetSubMeshIndexFromTriangle(Core.PaintedMesh, p_hit.triangleIndex);
                 
                 DrawHandle(p_hit);
@@ -78,7 +78,7 @@ namespace VertexColorPainter.Editor
 
             if (EditorGUI.EndChangeCheck())
             {
-                ChangeMeshColor(Core.PaintedMesh, Core.Config.lockToSubmesh ? _selectedSubmesh : -1);
+                ChangeMeshColor(Core.Config.lockToSubmesh ? _selectedSubmesh : -1);
             }
             
             GUILayout.Space(space);
@@ -110,15 +110,15 @@ namespace VertexColorPainter.Editor
             _lastCachedMesh = p_mesh;
         }
 
-        void ChangeMeshColor(Mesh p_mesh, int p_submeshIndex)
+        void ChangeMeshColor(int p_submeshIndex)
         {
-            Undo.RegisterCompleteObjectUndo(p_mesh, "Change Color");
+            Undo.RegisterCompleteObjectUndo(Core.PaintedMesh, "Change Color");
 
             int minIndex = 0;
-            int maxIndex = p_mesh.vertexCount;
+            int maxIndex = Core.PaintedMesh.vertexCount;
             if (p_submeshIndex >= 0)
             {
-                var submesh = p_mesh.GetSubMesh(p_submeshIndex);
+                var submesh = Core.PaintedMesh.GetSubMesh(p_submeshIndex);
                 minIndex = submesh.indexStart;
                 maxIndex = submesh.indexStart + submesh.indexCount;
             }
@@ -128,10 +128,10 @@ namespace VertexColorPainter.Editor
                 if (p_submeshIndex >= 0 && (_cachedColorIndices[i] < minIndex || _cachedColorIndices[i] >= maxIndex))
                     continue;
 
-                Core.CachedColors[_cachedColorIndices[i]] = Core.Config.colorChangeNew;
+                Core.SetColorAtIndex(_cachedColorIndices[i], Core.Config.colorChangeNew);
             }
             
-            p_mesh.colors = Core.CachedColors;
+            Core.InvalidateMeshColors();
 
             EditorUtility.SetDirty(Core.PaintedObject);
         }

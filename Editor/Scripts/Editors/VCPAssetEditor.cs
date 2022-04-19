@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
@@ -55,6 +56,36 @@ namespace VertexColorPainter.Editor
             {
                 ReimportWindow.InitReimportWindow(asset);
             }
+            
+            if (GUILayout.Button("Reset UV1", GUILayout.Height(32)))
+            {
+                asset.mesh.SetUVs(1, Enumerable.Repeat(Vector4.one, asset.mesh.vertexCount).ToList());
+            }
+
+            var readable = GUILayout.Toggle(asset.mesh.isReadable, "IsReadable");
+            if (readable != asset.mesh.isReadable)
+            {
+                ChangeReadable(readable);
+            }
+        }
+
+        private void ChangeReadable(bool p_readable)
+        {
+            var assetPath = AssetDatabase.GetAssetPath(target);
+            string filePath = Path.Combine(Directory.GetCurrentDirectory(), assetPath);
+            filePath = filePath.Replace("/", "\\");
+            string fileText = File.ReadAllText(filePath);
+            if (p_readable)
+            {
+                fileText = fileText.Replace("m_IsReadable: 0", "m_IsReadable: 1");
+            }
+            else
+            {
+                fileText = fileText.Replace("m_IsReadable: 1", "m_IsReadable: 0");
+            }
+            Debug.Log(fileText);
+            File.WriteAllText(filePath, fileText);
+            AssetDatabase.Refresh();
         }
     }
 }

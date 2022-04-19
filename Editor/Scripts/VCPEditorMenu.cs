@@ -16,34 +16,40 @@ namespace VertexColorPainter.Editor
             Core.Config.enabled = !Core.Config.enabled;
         }
         
-        [MenuItem("Tools/Vertex Color Painter/Closest Paint")]
-        private static void ToggleClosestPaint()
+        [MenuItem("Tools/Vertex Color Painter/Settings")]
+        private static void ShowSettings()
         {
-            Core.Config.enableClosestPaint = !Core.Config.enableClosestPaint;
-        }
-
-        [MenuItem("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)")]
-        private static void ToggleMeshIsolation()
-        {
-            Core.Config.autoMeshIsolation = !Core.Config.autoMeshIsolation;
+            VCPEditorWindow.InitEditorWindow();
         }
         
-        [MenuItem("Tools/Vertex Color Painter/Auto Mesh Framing")]
-        private static void ToggleMeshFraming()
-        {
-            Core.Config.autoMeshFraming = !Core.Config.autoMeshFraming;
-        }
+        // [MenuItem("Tools/Vertex Color Painter/Closest Paint")]
+        // private static void ToggleClosestPaint()
+        // {
+        //     Core.Config.enableClosestPaint = !Core.Config.enableClosestPaint;
+        // }
+        //
+        // [MenuItem("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)")]
+        // private static void ToggleMeshIsolation()
+        // {
+        //     Core.Config.autoMeshIsolation = !Core.Config.autoMeshIsolation;
+        // }
+        //
+        // [MenuItem("Tools/Vertex Color Painter/Auto Mesh Framing")]
+        // private static void ToggleMeshFraming()
+        // {
+        //     Core.Config.autoMeshFraming = !Core.Config.autoMeshFraming;
+        // }
         
         [MenuItem("Tools/Vertex Color Painter/Enabled", true)]
-        [MenuItem("Tools/Vertex Color Painter/Closest Paint", true)]
-        [MenuItem("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)", true)]
-        [MenuItem("Tools/Vertex Color Painter/Auto Mesh Framing", true)]
+        // [MenuItem("Tools/Vertex Color Painter/Closest Paint", true)]
+        // [MenuItem("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)", true)]
+        // [MenuItem("Tools/Vertex Color Painter/Auto Mesh Framing", true)]
         private static bool ToggleActionValidate()
         {
             Menu.SetChecked("Tools/Vertex Color Painter/Enabled", Core.Config.enabled);
-            Menu.SetChecked("Tools/Vertex Color Painter/Closest Paint", Core.Config.enableClosestPaint);
-            Menu.SetChecked("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)", Core.Config.autoMeshIsolation);
-            Menu.SetChecked("Tools/Vertex Color Painter/Auto Mesh Framing", Core.Config.autoMeshFraming);
+            // Menu.SetChecked("Tools/Vertex Color Painter/Closest Paint", Core.Config.enableClosestPaint);
+            // Menu.SetChecked("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)", Core.Config.autoMeshIsolation);
+            // Menu.SetChecked("Tools/Vertex Color Painter/Auto Mesh Framing", Core.Config.autoMeshFraming);
             return true;
         }
     }

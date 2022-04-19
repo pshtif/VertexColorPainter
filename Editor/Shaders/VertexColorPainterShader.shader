@@ -2,11 +2,12 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-Shader "Hidden/Vertex Color Painter/VertexColorShader"
+Shader "Hidden/Vertex Color Painter/VertexColorPainterShader"
 {
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _ChannelMask("Channel Mask", Vector) = (0,0,0,0)
     }
     SubShader
     {
@@ -24,7 +25,9 @@ Shader "Hidden/Vertex Color Painter/VertexColorShader"
             struct appdata
             {
                 float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
+                float4 uv : TEXCOORD0;
+                float4 uv1 : TEXCOORD1;
+                float4 uv2 : TEXCOORD2;
                 half4 color : COLOR0;
                 
             };
@@ -38,13 +41,20 @@ Shader "Hidden/Vertex Color Painter/VertexColorShader"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
+            float4 _ChannelMask;
 
             v2f vert (appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                o.color = v.color;
+                
+                // Do some mask hacking to show color of correct channel - sHTiF
+                half4 color = lerp(v.color, v.uv, _ChannelMask.x);
+                color = lerp(color, v.uv1, _ChannelMask.y);
+                color = lerp(color, v.uv2, _ChannelMask.z);
+                o.color = color;
+                
                 return o;
             }
 

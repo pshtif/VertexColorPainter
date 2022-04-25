@@ -12,7 +12,7 @@ namespace VertexColorPainter.Editor
     [InitializeOnLoad]
     public class VCPEditorCore
     {
-        const string VERSION = "0.6.0";
+        const string VERSION = "0.6.1";
         
         public GUISkin Skin => (GUISkin)Resources.Load("Skins/VertexColorPainterSkin");
         
@@ -79,8 +79,6 @@ namespace VertexColorPainter.Editor
         
         private string[] _cachedToolTypeNames;
         private string[] _cachedChannelTypeNames;
-
-        private bool _meshIsolationEnabled = false;
 
         private ToolBase _currentTool;
 
@@ -214,11 +212,12 @@ namespace VertexColorPainter.Editor
 
             var rect = p_sceneView.camera.GetScaledPixelRect();
             
-            
+            GUI.color = new Color(1, .5f, 0);
             if (GUI.Button(new Rect(5, rect.height - 25, 120, 20), "Enable Paiting"))
             {
                 EnablePainting(Selection.activeGameObject);
             }
+            GUI.color = Color.white;
             
             Handles.EndGUI();
         }
@@ -238,7 +237,7 @@ namespace VertexColorPainter.Editor
             // Handles.EndGUI();
 
             // TODO move to a separate function
-            //if (_meshIsolationEnabled)
+            if (Config.overlayRender)
             {
                 //GL.Clear(true, false, Color.black);
                 //VertexColorMaterial.SetPass(0);
@@ -257,12 +256,21 @@ namespace VertexColorPainter.Editor
             GUI.color = Color.white;
             
             int space = 8;
-            
+
+            if (GUI.Button(new Rect(rect.width-125, rect.height - 55, 120, 20),
+                    (Config.overlayRender ? "Disable" : "Enable") + " Overlay")) 
+            {
+                Config.overlayRender = !Config.overlayRender;
+                return;
+            }
+
+            GUI.color = new Color(1, .5f, 0);
             if (GUI.Button(new Rect(5, rect.height - 55, 120, 20), "Disable Painting"))
             {
                 DisablePainting();
                 return;
             }
+            GUI.color = Color.white;
 
             GUILayout.BeginArea(new Rect(5, rect.height - 22, rect.width - 5, 20));
             GUILayout.BeginHorizontal();
@@ -467,8 +475,6 @@ namespace VertexColorPainter.Editor
                 Frame();
             }
 
-            _meshIsolationEnabled = Config.autoMeshIsolation;
-
             _paintedMesh = SaveToVCPAsset(_paintedMesh, AssetDatabase.GetAssetPath(_paintedMesh));
 
             switch (_paintedType)
@@ -494,36 +500,9 @@ namespace VertexColorPainter.Editor
             if (asset != null)
                 return p_mesh;
 
-            Mesh tempMesh = (Mesh)UnityEngine.Object.Instantiate(p_mesh);
-            MeshUtility.Optimize(tempMesh);
+            asset = VCPAsset.CreateFromMesh(p_mesh, p_path);
 
-            if (!String.IsNullOrEmpty(p_path))
-            {
-                p_path = p_path.ToLower();
-                var name = p_path.Substring(0, p_path.Length - 4).Substring(p_path.LastIndexOf("/") + 1) + "_" +
-                           p_mesh.name;
-                p_path = p_path.Substring(0, p_path.LastIndexOf("/") + 1) + name + "_painted.asset";
-                tempMesh.name = name + "_painted";
-            }
-            else
-            {
-                if (!AssetDatabase.IsValidFolder("Assets/Painted"))
-                {
-                    AssetDatabase.CreateFolder("Assets", "Painted");
-                }
-                p_path = "Assets/Painted/"+p_mesh.name + ".asset";
-                tempMesh.name = p_mesh.name;
-            }
-            
-            asset = ScriptableObject.CreateInstance<VCPAsset>();
-            asset.mesh = tempMesh;
-            //asset.SetOriginalAsset(p_mesh);
-            
-            AssetDatabase.CreateAsset(asset, p_path);
-            AssetDatabase.AddObjectToAsset(tempMesh, asset);
-            AssetDatabase.SaveAssets();
-
-            return tempMesh;
+            return asset.mesh;
         }
 
         private void Frame()

@@ -2,7 +2,9 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using System.IO;
 using UnityEditor;
+using UnityEngine;
 
 namespace VertexColorPainter.Editor
 {
@@ -21,25 +23,7 @@ namespace VertexColorPainter.Editor
         {
             VCPEditorWindow.InitEditorWindow();
         }
-        
-        // [MenuItem("Tools/Vertex Color Painter/Closest Paint")]
-        // private static void ToggleClosestPaint()
-        // {
-        //     Core.Config.enableClosestPaint = !Core.Config.enableClosestPaint;
-        // }
-        //
-        // [MenuItem("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)")]
-        // private static void ToggleMeshIsolation()
-        // {
-        //     Core.Config.autoMeshIsolation = !Core.Config.autoMeshIsolation;
-        // }
-        //
-        // [MenuItem("Tools/Vertex Color Painter/Auto Mesh Framing")]
-        // private static void ToggleMeshFraming()
-        // {
-        //     Core.Config.autoMeshFraming = !Core.Config.autoMeshFraming;
-        // }
-        
+
         [MenuItem("Tools/Vertex Color Painter/Enabled", true)]
         // [MenuItem("Tools/Vertex Color Painter/Closest Paint", true)]
         // [MenuItem("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)", true)]
@@ -51,6 +35,23 @@ namespace VertexColorPainter.Editor
             // Menu.SetChecked("Tools/Vertex Color Painter/Auto Mesh Isolation (Experimental)", Core.Config.autoMeshIsolation);
             // Menu.SetChecked("Tools/Vertex Color Painter/Auto Mesh Framing", Core.Config.autoMeshFraming);
             return true;
+        }
+        
+        /**
+         *  ASSET MENU ITEMS
+         */
+        
+        [MenuItem("Assets/Create VCPAsset")]
+        private static void CreateVCPAsset()
+        {
+            VCPAsset.CreateFromFBX(Selection.activeObject as GameObject);
+        }
+        
+        [MenuItem("Assets/Create VCPAsset", true)]
+        private static bool CreateVCPAssetValidation()
+        {
+            var path = AssetDatabase.GetAssetPath(Selection.activeObject);
+            return Selection.activeObject is GameObject && Path.GetExtension(path) == ".fbx";
         }
     }
 }

@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.6.1 - 25.4.2022
+
+### Added
+
+- Added option to enable/disable overlay rendering
+
+### Release 0.6.0 - 21.4.2022
+
+### Added
+
+- Added support for other channels painting (UV0-UV3)
+- Added custom masked shaders to visualise painted channels
+
+### Changed
+
+- Changed painted model is now rendered on top of the sceneview using custom shaders
+- Multiple refactors in the code base to implement multi channel painting
+
 ### Release 0.5.3 - 8.4.2022
 
 ### Changed

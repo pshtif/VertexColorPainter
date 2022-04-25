@@ -40,10 +40,9 @@ namespace VertexColorPainter.Editor
 
         [HideInInspector] 
         public bool enableUv0Editing = false;
-        
-        [Obsolete]
-        [HideInInspector]
-        public bool autoMeshIsolation = false;
+
+        [HideInInspector] 
+        public bool overlayRender = true;
 
         [HideInInspector]
         public bool autoMeshFraming = false;

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -17,6 +18,8 @@ namespace VertexColorPainter.Editor
     [CustomEditor(typeof(VCPAsset))]
     public class VCPAssetEditor : UnityEditor.Editor
     {
+        private Texture2D _thumbnailTexture;
+        
         public override void OnInspectorGUI()
         {
             VCPAsset asset = (target as VCPAsset);
@@ -57,16 +60,13 @@ namespace VertexColorPainter.Editor
                 ReimportWindow.InitReimportWindow(asset);
             }
             
-            if (GUILayout.Button("Reset UV1", GUILayout.Height(32)))
-            {
-                asset.mesh.SetUVs(1, Enumerable.Repeat(Vector4.one, asset.mesh.vertexCount).ToList());
-            }
-
-            var readable = GUILayout.Toggle(asset.mesh.isReadable, "IsReadable");
-            if (readable != asset.mesh.isReadable)
+            var readable = GUILayout.Toggle(asset.GetMesh(0).isReadable, "IsReadable");
+            if (readable != asset.GetMesh(0).isReadable)
             {
                 ChangeReadable(readable);
             }
+            
+            Repaint();
         }
 
         private void ChangeReadable(bool p_readable)
@@ -86,6 +86,59 @@ namespace VertexColorPainter.Editor
             Debug.Log(fileText);
             File.WriteAllText(filePath, fileText);
             AssetDatabase.Refresh();
+        }
+
+        void GeneratePreviewTexture()
+        {
+            if (target == null)
+                return;
+            
+            var mesh = (target as VCPAsset).GetMesh(0);
+            if (mesh == null)
+                return;
+            
+            var texture = AssetPreview.GetAssetPreview((target as VCPAsset).GetMesh(0));
+            
+            if (texture == null)
+                return;
+
+            if (texture != null) 
+            {
+                Texture2D vcpTexture = Resources.Load("Textures/vcpasset") as Texture2D;
+                Color[] colors1 = texture.GetPixels(0, 0, 128, 128);
+                Color[] colors2 = vcpTexture.GetPixels(0, 0, 128, 128);
+                Color[] colors = new Color[colors1.Length];
+                for (int i = 0; i < colors.Length; i++)
+                    colors[i] = new Color(Mathf.Lerp(colors1[i].r, colors2[i].r, colors2[i].a),
+                        Mathf.Lerp(colors1[i].g, colors2[i].g, colors2[i].a),
+                        Mathf.Lerp(colors1[i].b, colors2[i].b, colors2[i].a), 1);
+                
+                texture.SetPixels(colors);
+                texture.Apply();
+                _thumbnailTexture = texture;
+            }
+        }
+
+        private void OnEnable()
+        {
+            Debug.Log("OnEnable");
+            
+            GeneratePreviewTexture();
+
+            if (_thumbnailTexture == null)
+            {
+                Thread.Sleep(100);
+                GeneratePreviewTexture();
+            }
+            
+            Debug.Log("OnEnable2");
+        }
+
+        public override Texture2D RenderStaticPreview(string assetPath, UnityEngine.Object[] subAssets, int width, int height)
+        {
+            Debug.Log("RenderStaticPreview: "+_thumbnailTexture);
+
+            return _thumbnailTexture;
         }
     }
 }

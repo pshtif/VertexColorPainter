@@ -2,11 +2,14 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using System;
 using UnityEditor;
 using UnityEngine;
 
 namespace VertexColorPainter.Runtime
 {
+    // This class is obsolete and will be removed later
+    [Obsolete]
     public class PaintedMeshFilter : MonoBehaviour
     {
         private MeshFilter _filter;

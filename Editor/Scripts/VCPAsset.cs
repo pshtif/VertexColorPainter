@@ -32,7 +32,7 @@ namespace VertexColorPainter.Editor
                 //var name = p_path.Substring(0, p_path.Length - 4).Substring(p_path.LastIndexOf("/") + 1) + "_" + p_mesh.name;
                 //p_path = p_path.Substring(0, p_path.LastIndexOf("/") + 1) + name + "_painted.asset";
                 //tempMesh.name = name + "_painted";
-                p_path = p_path.Substring(0, p_path.LastIndexOf(".")) + ".asset";
+                p_path = p_path.Substring(0, p_path.LastIndexOf("/") + 1) + p_mesh.name + ".asset";
                 tempMesh.name = p_mesh.name;
             }
             else

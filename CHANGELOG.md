@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.6.2 - 27.4.2022
+
+### Changed
+
+- Changed painted model naming to the name of mesh inside FBX instead of FBX name
+- Changed submesh highlighting now works on CTRL even when autoFill is not enabled
+
 ### Release 0.6.1 - 25.4.2022
 
 ### Added

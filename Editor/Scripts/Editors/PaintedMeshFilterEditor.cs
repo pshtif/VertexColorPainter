@@ -13,6 +13,7 @@ using VertexColorPainter.Runtime;
 
 namespace VertexColorPainter.Editor
 {
+    [Obsolete]
     [CustomEditor(typeof(PaintedMeshFilter))]
     public class PaintedMeshFilterEditor : UnityEditor.Editor
     {

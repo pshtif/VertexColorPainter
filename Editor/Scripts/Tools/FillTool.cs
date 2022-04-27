@@ -21,7 +21,7 @@ namespace VertexColorPainter.Editor
                 int index = MeshUtils.GetClosesVertexIndex(Core.PaintedMesh, Core.PaintedObject.transform.worldToLocalMatrix, p_hit);
                 _pickedColor = Core.GetColorAtIndex(index);
 
-                if (Core.Config.autoFill)
+                //if (Core.Config.autoFill)
                 {
                     //Core.SelectionMaterial.SetPass(0);
                     //Graphics.DrawMeshNow(Core.PaintedMesh, Core.PaintedObject.transform.localToWorldMatrix, submesh);

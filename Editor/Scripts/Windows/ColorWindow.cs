@@ -15,9 +15,7 @@ namespace VertexColorPainter.Editor
     public class ColorWindow : EditorWindow
     {
         private Mesh _importedMesh;
-        
-        private PaintedMeshFilter _paintedMeshFilter;
-        
+
         private ReorderableList _importedSubMeshList;
         
         public static ColorWindow Instance { get; private set; }

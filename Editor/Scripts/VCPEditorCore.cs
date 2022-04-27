@@ -12,7 +12,7 @@ namespace VertexColorPainter.Editor
     [InitializeOnLoad]
     public class VCPEditorCore
     {
-        const string VERSION = "0.6.1";
+        const string VERSION = "0.6.2";
         
         public GUISkin Skin => (GUISkin)Resources.Load("Skins/VertexColorPainterSkin");
         
@@ -564,16 +564,12 @@ namespace VertexColorPainter.Editor
             {
                 case ChannelType.COLOR:
                     return CachedColors[p_index];
-                    break;
                 case ChannelType.UV0:
                     return CachedUv0[p_index];
-                    break;
                 case ChannelType.UV1:
                     return CachedUv1[p_index];
-                    break;
                 case ChannelType.UV2:
                     return CachedUv2[p_index];
-                    break;
             }
 
             return Color.black;
@@ -623,16 +619,12 @@ namespace VertexColorPainter.Editor
             {
                 case ChannelType.COLOR:
                     return CachedColors;
-                    break;
                 case ChannelType.UV0:
                     return CachedUv0.Select(v => (Color)v).ToArray();
-                    break;
                 case ChannelType.UV1:
                     return CachedUv1.Select(v => (Color)v).ToArray();
-                    break;
                 case ChannelType.UV2:
                     return CachedUv2.Select(v => (Color)v).ToArray();
-                    break;
             }
 
             return null;

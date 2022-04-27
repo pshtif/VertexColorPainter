@@ -12,7 +12,6 @@ namespace VertexColorPainter.Editor
 {
     public class ColorTool : ToolBase
     {
-        private int _selectedSubmesh;
         private Mesh _lastCachedMesh;
         private List<int> _cachedColorIndices;
         private Color _pickedColor;

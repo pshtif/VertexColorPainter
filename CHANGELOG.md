@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.6.3 - 2.5.2022
+
+### Added
+
+- Added option to export FBX from VCP asset directly
+
 ### Release 0.6.2 - 27.4.2022
 
 ### Changed

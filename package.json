@@ -1,7 +1,7 @@
 {
   "name": "com.shtif.vertexcolorpainter",
   "displayName": "Vertex Color Painter",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "unity": "2019.4",
   "description": "Tool for paiting color into various vertex channels on meshes in editor.",
   "author": {
@@ -15,5 +15,6 @@
     "tool"
   ],
   "dependencies": {
+    "com.unity.formats.fbx": "4.1.2"
   }
 }

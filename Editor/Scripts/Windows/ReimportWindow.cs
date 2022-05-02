@@ -191,11 +191,11 @@ namespace VertexColorPainter.Editor
             // If we have original mesh we don't want to create new asset it would break references to it already made
             else
             {
+                _vcpAsset.mesh.vertices = newMesh.vertices;
                 _vcpAsset.mesh.bindposes = newMesh.bindposes;
                 _vcpAsset.mesh.normals = newMesh.normals;
                 _vcpAsset.mesh.colors = newMesh.colors;
                 _vcpAsset.mesh.colors32 = newMesh.colors32;
-                _vcpAsset.mesh.vertices = newMesh.vertices;
                 _vcpAsset.mesh.triangles = newMesh.triangles;
                 _vcpAsset.mesh.uv = newMesh.uv;
                 _vcpAsset.mesh.uv2 = newMesh.uv2;

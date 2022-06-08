@@ -12,8 +12,6 @@ namespace VertexColorPainter.Editor
 {
     public class VCPAsset : ScriptableObject
     {
-        public Mesh mesh;
-
         public Mesh GetMesh(int p_index)
         {
             Object[] objs = AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(this)).ToList()
@@ -21,17 +19,19 @@ namespace VertexColorPainter.Editor
             return objs.Length > p_index ? (Mesh)objs[p_index] : null;
         }
 
-        static public VCPAsset CreateFromMesh(Mesh p_mesh, string p_path = null)
+        public Mesh[] GetMeshes()
+        {
+            return AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(this)).ToList()
+                .FindAll(o => o is Mesh).Select(o => o as Mesh).ToArray();
+        }
+
+        static public VCPAsset CreateFromMesh(ref Mesh p_mesh, string p_path = null)
         {
             Mesh tempMesh = (Mesh)UnityEngine.Object.Instantiate(p_mesh);
             MeshUtility.Optimize(tempMesh);
 
             if (!String.IsNullOrEmpty(p_path))
             {
-                //p_path = p_path.ToLower();
-                //var name = p_path.Substring(0, p_path.Length - 4).Substring(p_path.LastIndexOf("/") + 1) + "_" + p_mesh.name;
-                //p_path = p_path.Substring(0, p_path.LastIndexOf("/") + 1) + name + "_painted.asset";
-                //tempMesh.name = name + "_painted";
                 p_path = p_path.Substring(0, p_path.LastIndexOf("/") + 1) + p_mesh.name + ".asset";
                 tempMesh.name = p_mesh.name;
             }
@@ -41,16 +41,16 @@ namespace VertexColorPainter.Editor
                 {
                     AssetDatabase.CreateFolder("Assets", "Painted");
                 }
-                p_path = "Assets/Painted/"+p_mesh.name + ".asset";
+                p_path = "Assets/Painted/" + p_mesh.name + ".asset";
                 tempMesh.name = p_mesh.name;
             }
-            
-            VCPAsset asset = ScriptableObject.CreateInstance<VCPAsset>();
-            asset.mesh = tempMesh;
 
+            VCPAsset asset = ScriptableObject.CreateInstance<VCPAsset>();
             AssetDatabase.CreateAsset(asset, p_path);
             AssetDatabase.AddObjectToAsset(tempMesh, asset);
             AssetDatabase.SaveAssets();
+
+            p_mesh = tempMesh;
 
             return asset;
         }
@@ -77,6 +77,19 @@ namespace VertexColorPainter.Editor
             AssetDatabase.SaveAssets();
 
             return asset;
+        }
+        
+        public static Mesh SaveToVCPAsset(Mesh p_mesh, string p_path = null)
+        {
+            VCPAsset asset = AssetDatabase.LoadAssetAtPath<VCPAsset>(p_path);
+
+            // If it is already VCPAsset abort
+            if (asset != null)
+                return p_mesh;
+
+            CreateFromMesh(ref p_mesh, p_path);
+
+            return p_mesh;
         }
     }
 }

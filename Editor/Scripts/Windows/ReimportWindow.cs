@@ -8,7 +8,6 @@ using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Rendering;
-using VertexColorPainter.Runtime;
 
 namespace VertexColorPainter.Editor
 {
@@ -17,24 +16,37 @@ namespace VertexColorPainter.Editor
         private Mesh _importedMesh;
         
         private VCPAsset _vcpAsset;
+        private int _meshAssetIndex;
+
+        private Mesh _originalMesh => _vcpAsset.GetMesh(_meshAssetIndex); 
         
         private ReorderableList _importedSubMeshList;
         
         public static ReimportWindow Instance { get; private set; }
         
-        public static ReimportWindow InitReimportWindow(VCPAsset p_asset)
+        public static ReimportWindow InitReimportWindow(VCPAsset p_asset, int p_meshAssetIndex)
         {
+            var mesh = p_asset.GetMesh(p_meshAssetIndex);
+            
             Instance = GetWindow<ReimportWindow>();
             Instance._vcpAsset = p_asset;
+            Instance._meshAssetIndex = p_meshAssetIndex;
             Instance.titleContent = new GUIContent("Vertex Color Editor Reimport");
-            Instance.minSize = new Vector2(800, p_asset.mesh == null ? 165 : p_asset.mesh.subMeshCount * 22 + 165);
-            Instance.maxSize = new Vector2(800, p_asset.mesh == null ? 165 : p_asset.mesh.subMeshCount * 22 + 165);
+            Instance.minSize = new Vector2(800, mesh == null ? 165 : mesh.subMeshCount * 22 + 165);
+            Instance.maxSize = new Vector2(800, mesh == null ? 165 : mesh.subMeshCount * 22 + 165);
 
             return Instance;
         }
 
         public void OnGUI()
         {
+            if (_vcpAsset == null)
+            {
+                Close();
+                return;
+            }
+
+
             var style = new GUIStyle();
             style.normal.textColor = new Color(1, 0.5f, 0);
             style.fontStyle = FontStyle.Bold;
@@ -53,8 +65,8 @@ namespace VertexColorPainter.Editor
                 RefreshList(MeshUtils.GetSubMeshDescriptors(_importedMesh));
             }
             
-            var originalSubMeshes = MeshUtils.GetSubMeshDescriptors(_vcpAsset.mesh);
-            var originalColors = MeshUtils.GetSubMeshColors(_vcpAsset.mesh);
+            var originalSubMeshes = MeshUtils.GetSubMeshDescriptors(_originalMesh);
+            var originalColors = MeshUtils.GetSubMeshColors(_originalMesh);
             var importedSubMeshes = MeshUtils.GetSubMeshDescriptors(_importedMesh);
 
             style.fontSize = 12;
@@ -136,7 +148,7 @@ namespace VertexColorPainter.Editor
             
             _importedSubMeshList.drawElementCallback += DrawListItems;
 
-            var count = Math.Max(_vcpAsset.mesh == null ? 0 : _vcpAsset.mesh.subMeshCount, p_subMeshes.Length);
+            var count = Math.Max(_originalMesh == null ? 0 : _originalMesh.subMeshCount, p_subMeshes.Length);
             
             Instance.minSize = new Vector2(800, count * 22 + 165);
             Instance.maxSize = new Vector2(800, count * 22 + 165);
@@ -152,7 +164,7 @@ namespace VertexColorPainter.Editor
 
         private void Reimport()
         {
-            var originalColors = MeshUtils.GetSubMeshColors(_vcpAsset.mesh);
+            var originalColors = MeshUtils.GetSubMeshColors(_originalMesh);
             
             var newMesh = Instantiate(_importedMesh);
             newMesh.name = _vcpAsset.name;
@@ -170,7 +182,7 @@ namespace VertexColorPainter.Editor
             newMesh.colors = colors;
 
             // If we don't have original mesh (can be malformed)
-            if (_vcpAsset.mesh == null)
+            if (_originalMesh == null)
             {
                 var subAssets = AssetDatabase.LoadAllAssetRepresentationsAtPath(AssetDatabase.GetAssetPath(_vcpAsset));
                 foreach (var asset in subAssets)
@@ -182,28 +194,27 @@ namespace VertexColorPainter.Editor
                 }
 
                 AssetDatabase.SaveAssets();
-
-                _vcpAsset.mesh = newMesh;
-
                 AssetDatabase.AddObjectToAsset(newMesh, _vcpAsset);
                 AssetDatabase.SaveAssets();
             }
             // If we have original mesh we don't want to create new asset it would break references to it already made
             else
             {
-                _vcpAsset.mesh.vertices = newMesh.vertices;
-                _vcpAsset.mesh.bindposes = newMesh.bindposes;
-                _vcpAsset.mesh.normals = newMesh.normals;
-                _vcpAsset.mesh.colors = newMesh.colors;
-                _vcpAsset.mesh.colors32 = newMesh.colors32;
-                _vcpAsset.mesh.triangles = newMesh.triangles;
-                _vcpAsset.mesh.uv = newMesh.uv;
-                _vcpAsset.mesh.uv2 = newMesh.uv2;
+                _originalMesh.vertices = newMesh.vertices;
+                _originalMesh.bindposes = newMesh.bindposes;
+                _originalMesh.normals = newMesh.normals;
+                _originalMesh.colors = newMesh.colors;
+                _originalMesh.colors32 = newMesh.colors32;
+                _originalMesh.triangles = newMesh.triangles;
+                _originalMesh.uv = newMesh.uv;
+                _originalMesh.uv2 = newMesh.uv2;
                 for (int i = 0; i < newMesh.subMeshCount; i++)
                 {
-                    _vcpAsset.mesh.subMeshCount = newMesh.subMeshCount;
-                    _vcpAsset.mesh.SetSubMesh(i, newMesh.GetSubMesh(i));
+                    _originalMesh.subMeshCount = newMesh.subMeshCount;
+                    _originalMesh.SetSubMesh(i, newMesh.GetSubMesh(i));
                 }
+                
+                EditorUtility.SetDirty(_originalMesh);
             }
         }
     }

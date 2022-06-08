@@ -18,28 +18,28 @@ namespace VertexColorPainter.Editor
 
         public override void HandleMouseHitInternal(SceneView p_sceneView, RaycastHit p_hit, Transform p_hitTransform)
         {
-            if (_lastCachedMesh != Core.PaintedMesh)
+            if (_lastCachedMesh != VCPEditorCore.PaintedMesh)
             {
-                CacheColorIndices(Core.Config.colorChangeCurrent, Core.PaintedMesh);
+                CacheColorIndices(VCPEditorCore.Config.colorChangeCurrent, VCPEditorCore.PaintedMesh);
             }
 
             if (Event.current.control)
             {
-                int index = MeshUtils.GetClosesVertexIndex(Core.PaintedMesh, Core.PaintedObject.transform.worldToLocalMatrix, p_hit);
-                _pickedColor = Core.GetColorAtIndex(index);
-                int submesh = MeshUtils.GetSubMeshIndexFromTriangle(Core.PaintedMesh, p_hit.triangleIndex);
+                int index = MeshUtils.GetClosesVertexIndex(VCPEditorCore.PaintedMesh, VCPEditorCore.PaintedObject.transform.worldToLocalMatrix, p_hit);
+                _pickedColor = VCPEditorCore.Cache.GetColorAtIndex(index, VCPEditorCore.Config.channelType);
+                int submesh = MeshUtils.GetSubMeshIndexFromTriangle(VCPEditorCore.PaintedMesh, p_hit.triangleIndex);
                 
                 DrawHandle(p_hit);
                 
-                // Core.SelectionMaterial.SetPass(0);
+                // VCPEditorCore.SelectionMaterial.SetPass(0);
                 // Graphics.DrawMeshNow(mesh, transform.localToWorldMatrix, submesh);
 
                 if (Event.current.button == 0 && !Event.current.alt && (Event.current.type == EventType.MouseDrag ||
                                            Event.current.type == EventType.MouseDown))
                 {
                     _selectedSubmesh = submesh;
-                    Core.Config.colorChangeCurrent = _pickedColor;
-                    CacheColorIndices(Core.Config.colorChangeCurrent, Core.PaintedMesh);
+                    VCPEditorCore.Config.colorChangeCurrent = _pickedColor;
+                    CacheColorIndices(VCPEditorCore.Config.colorChangeCurrent, VCPEditorCore.PaintedMesh);
                 }
             }
         }
@@ -48,18 +48,52 @@ namespace VertexColorPainter.Editor
         {
             Handles.color = Color.white;
             var gizmoSize = HandleUtility.GetHandleSize(p_hit.point) / 10f;
-            Handles.DrawSolidDisc(p_hit.point, p_hit.normal, gizmoSize * Core.Config.brushSize + gizmoSize / 5);
+            Handles.DrawSolidDisc(p_hit.point, p_hit.normal, gizmoSize * VCPEditorCore.Config.brushSize + gizmoSize / 5);
             Handles.color = _pickedColor;
-            Handles.DrawSolidDisc(p_hit.point, p_hit.normal, gizmoSize * Core.Config.brushSize);
+            Handles.DrawSolidDisc(p_hit.point, p_hit.normal, gizmoSize * VCPEditorCore.Config.brushSize);
         }
-        
-        public override void DrawGUI(SceneView p_sceneView)
+
+        public override void DrawSettingsGUI()
+        {
+            EditorGUILayout.LabelField("Color Tool Settings", Skin.GetStyle("settingslabel"), GUILayout.Height(24));
+                
+            GUILayout.Space(4);
+            
+            HandleChannelSelection();
+            
+            VCPEditorCore.Config.colorChangeCurrent = EditorGUILayout.ColorField("Current Color", VCPEditorCore.Config.colorChangeCurrent);
+            
+            EditorGUI.BeginChangeCheck();
+            VCPEditorCore.Config.colorChangeNew = EditorGUILayout.ColorField("New Color", VCPEditorCore.Config.colorChangeNew);
+            
+            if (EditorGUI.EndChangeCheck())
+            {
+                ChangeMeshColor(VCPEditorCore.Config.lockToSubmesh ? _selectedSubmesh : -1);
+            }
+            
+            if (VCPEditorCore.Cache.SubmeshColors.Count > 1)
+            {
+                VCPEditorCore.Config.lockToSubmesh = EditorGUILayout.Toggle("Lock to Submesh",VCPEditorCore.Config.lockToSubmesh);
+
+                if (VCPEditorCore.Config.lockToSubmesh)
+                {
+                    _selectedSubmesh = EditorGUILayout.Popup("Submesh", _selectedSubmesh, VCPEditorCore.Cache.SubmeshNames);
+                }
+            }
+
+            if (GUILayout.Button("Color Editor"))
+            {
+                ColorWindow.InitWindow();
+            }
+        }
+
+        public override void DrawSceneGUI(SceneView p_sceneView)
         {
             var space = 8;
             
-            if (Core.PaintedObject != null && _lastCachedMesh != Core.PaintedMesh)
+            if (VCPEditorCore.PaintedObject != null && _lastCachedMesh != VCPEditorCore.PaintedMesh)
             {
-                CacheColorIndices(Core.Config.colorChangeCurrent, Core.PaintedMesh);
+                CacheColorIndices(VCPEditorCore.Config.colorChangeCurrent, VCPEditorCore.PaintedMesh);
             }
             
             var style = new GUIStyle("label");
@@ -67,33 +101,33 @@ namespace VertexColorPainter.Editor
 
             GUILayout.Space(space);
             
-            GUILayout.Label("Current Color: ", style, GUILayout.Width(85));
-            Core.Config.colorChangeCurrent = EditorGUILayout.ColorField(Core.Config.colorChangeCurrent, GUILayout.Width(60));
-            GUILayout.Space(8);
-            
-            GUILayout.Label("New Color: ", style, GUILayout.Width(67));
-            EditorGUI.BeginChangeCheck();
-            Core.Config.colorChangeNew = EditorGUILayout.ColorField(Core.Config.colorChangeNew, GUILayout.Width(60));
+            // GUILayout.Label("Current Color: ", style, GUILayout.Width(85));
+            // VCPEditorCore.Config.colorChangeCurrent = EditorGUILayout.ColorField(VCPEditorCore.Config.colorChangeCurrent, GUILayout.Width(60));
+            // GUILayout.Space(8);
+            //
+            // GUILayout.Label("New Color: ", style, GUILayout.Width(67));
+            // EditorGUI.BeginChangeCheck();
+            // VCPEditorCore.Config.colorChangeNew = EditorGUILayout.ColorField(VCPEditorCore.Config.colorChangeNew, GUILayout.Width(60));
 
-            if (EditorGUI.EndChangeCheck())
-            {
-                ChangeMeshColor(Core.Config.lockToSubmesh ? _selectedSubmesh : -1);
-            }
+            // if (EditorGUI.EndChangeCheck())
+            // {
+            //     ChangeMeshColor(VCPEditorCore.Config.lockToSubmesh ? _selectedSubmesh : -1);
+            // }
             
             GUILayout.Space(space);
 
-            if (Core.SubmeshColors.Count > 1)
+            if (VCPEditorCore.Cache.SubmeshColors.Count > 1)
             {
                 GUILayout.Space(space);
 
                 GUILayout.Label("Lock to Submesh: ", style, GUILayout.Width(110));
-                Core.Config.lockToSubmesh = EditorGUILayout.Toggle(Core.Config.lockToSubmesh, GUILayout.Width(20));
+                VCPEditorCore.Config.lockToSubmesh = EditorGUILayout.Toggle(VCPEditorCore.Config.lockToSubmesh, GUILayout.Width(20));
 
-                if (Core.Config.lockToSubmesh)
+                if (VCPEditorCore.Config.lockToSubmesh)
                 {
                     GUILayout.Label("Submesh: ", style, GUILayout.Width(65));
                     _selectedSubmesh =
-                        EditorGUILayout.Popup(_selectedSubmesh, Core.SubmeshNames.ToArray(), GUILayout.Width(120));
+                        EditorGUILayout.Popup(_selectedSubmesh, VCPEditorCore.Cache.SubmeshNames.ToArray(), GUILayout.Width(120));
                 }
             }
 
@@ -111,13 +145,13 @@ namespace VertexColorPainter.Editor
 
         void ChangeMeshColor(int p_submeshIndex)
         {
-            Undo.RegisterCompleteObjectUndo(Core.PaintedMesh, "Change Color");
+            Undo.RegisterCompleteObjectUndo(VCPEditorCore.PaintedMesh, "Change Color");
 
             int minIndex = 0;
-            int maxIndex = Core.PaintedMesh.vertexCount;
+            int maxIndex = VCPEditorCore.PaintedMesh.vertexCount;
             if (p_submeshIndex >= 0)
             {
-                var submesh = Core.PaintedMesh.GetSubMesh(p_submeshIndex);
+                var submesh = VCPEditorCore.PaintedMesh.GetSubMesh(p_submeshIndex);
                 minIndex = submesh.indexStart;
                 maxIndex = submesh.indexStart + submesh.indexCount;
             }
@@ -127,12 +161,12 @@ namespace VertexColorPainter.Editor
                 if (p_submeshIndex >= 0 && (_cachedColorIndices[i] < minIndex || _cachedColorIndices[i] >= maxIndex))
                     continue;
 
-                Core.SetColorAtIndex(_cachedColorIndices[i], Core.Config.colorChangeNew);
+                VCPEditorCore.Cache.SetColorAtIndex(_cachedColorIndices[i], VCPEditorCore.Config.colorChangeNew, VCPEditorCore.Config.channelType);
             }
             
-            Core.InvalidateMeshColors();
+            VCPEditorCore.Cache.InvalidateMeshColors(VCPEditorCore.PaintedMesh, VCPEditorCore.Config.channelType);
 
-            EditorUtility.SetDirty(Core.PaintedObject);
+            EditorUtility.SetDirty(VCPEditorCore.PaintedObject);
         }
 
         private List<int> GetColorIndices(Color p_color, Mesh p_mesh)
@@ -160,8 +194,8 @@ namespace VertexColorPainter.Editor
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
 
-            GUILayout.Label(" Ctrl + Left Mouse: ", Core.Skin.GetStyle("keylabel"), GUILayout.Height(16));
-            GUILayout.Label("Pick vertex color ", Core.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
+            GUILayout.Label(" Ctrl + Left Mouse: ", VCPEditorCore.Skin.GetStyle("keylabel"), GUILayout.Height(16));
+            GUILayout.Label("Pick vertex color ", VCPEditorCore.Skin.GetStyle("keyfunction"), GUILayout.Height(16));
             
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();

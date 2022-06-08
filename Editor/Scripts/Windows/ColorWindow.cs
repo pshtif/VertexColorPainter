@@ -2,13 +2,10 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
-using System;
 using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
-using UnityEngine.Rendering;
-using VertexColorPainter.Runtime;
 
 namespace VertexColorPainter.Editor
 {
@@ -38,20 +35,20 @@ namespace VertexColorPainter.Editor
 
             GUILayout.Label("Color Editor", style, GUILayout.Height(24));
 
-            if (VCPEditorCore.Instance.PaintedMesh == null)
+            if (VCPEditorCore.PaintedMesh == null)
             {
                 GUILayout.Label("No mesh is being painted.");
                 return;
             }
 
-            var uniqueColors = VCPEditorCore.Instance.GetAllColors().Distinct();
+            var uniqueColors = VCPEditorCore.Cache.GetAllColors(VCPEditorCore.Config.channelType).Distinct();
 
             foreach (var color in uniqueColors)
             {
                 var newColor = EditorGUILayout.ColorField(color);
                 if (newColor != color)
                 {
-                    ChangeMeshColor(VCPEditorCore.Instance.PaintedMesh, color, newColor);
+                    ChangeMeshColor(VCPEditorCore.PaintedMesh, color, newColor);
                 }
             }
         }
@@ -60,15 +57,15 @@ namespace VertexColorPainter.Editor
         {
             for (int i = 0; i < p_mesh.vertexCount; i++)
             {
-                if (VCPEditorCore.Instance.GetColorAtIndex(i) == p_oldColor)
+                if (VCPEditorCore.Cache.GetColorAtIndex(i, VCPEditorCore.Config.channelType) == p_oldColor)
                 {
-                    VCPEditorCore.Instance.SetColorAtIndex(i, p_newColor);
+                    VCPEditorCore.Cache.SetColorAtIndex(i, p_newColor, VCPEditorCore.Config.channelType);
                 }
             }
 
-            VCPEditorCore.Instance.InvalidateMeshColors();
+            VCPEditorCore.Cache.InvalidateMeshColors(VCPEditorCore.PaintedMesh, VCPEditorCore.Config.channelType);
 
-            EditorUtility.SetDirty(VCPEditorCore.Instance.PaintedObject);
+            EditorUtility.SetDirty(VCPEditorCore.PaintedObject);
         }
     }
 }

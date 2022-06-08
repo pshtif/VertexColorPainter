@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## RELEASES
 
+### Release 0.6.6 - 12.5.2022
+
+#### Fixed
+
+- fixed when enabling painting on object check if current channel is available if not enable in default color channel
+
+### Release 0.6.5 - 11.5.2022
+
+### Fixed
+
+- Fixed selected submesh is now reset for newly selected mesh to avoid index out of bounds with less submeshes
+
+### Release 0.6.4 - 3.5.2022
+
+### Changed
+
+- Changed started adding support for multiple meshes in single VCP asset, more inspector changes etc.
+- Changed mesh is not now optimized when saved to VCP asset
+
 ### Release 0.6.3 - 2.5.2022
 
 ### Added

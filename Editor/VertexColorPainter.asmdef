@@ -2,7 +2,6 @@
     "name": "VertexColorPainter.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:19e31c9193a100146861992119ee5398",
         "GUID:0f9e8f73c69964f1e8176f9a0b86f9b2"
     ],
     "includePlatforms": [

@@ -18,94 +18,49 @@ namespace VertexColorPainter.Editor
     [CustomEditor(typeof(VCPAsset))]
     public class VCPAssetEditor : UnityEditor.Editor
     {
-        private Texture2D _thumbnailTexture;
+        public VCPAsset asset => target as VCPAsset;
         
+        private Texture2D _thumbnailTexture;
+
         public override void OnInspectorGUI()
         {
-            VCPAsset asset = (target as VCPAsset);
-            
             var style = new GUIStyle();
             style.normal.textColor = Color.white;
             style.fontSize = 12;
             style.fontStyle = FontStyle.Italic;
             style.alignment = TextAnchor.MiddleRight;
 
-            //EditorGUILayout.BeginHorizontal();
-            //EditorGUILayout.LabelField("Original: ", GUILayout.Width(70));
+            var meshes = asset.GetMeshes();
+            for (int i = 0; i<meshes.Length; i++)
+            {
+                DrawMeshGUI(meshes[i], i);
+            }
 
-            // EditorGUILayout.LabelField(asset.fbxAssetPath, style);
-            // EditorGUILayout.EndHorizontal();
-            //
-            // if (GUILayout.Button("Go to original asset"))
-            // {
-            //     EditorGUIUtility.PingObject(AssetDatabase.LoadAssetAtPath<Mesh>(asset.fbxAssetPath));
-            // }
-
-            if (GUILayout.Button("Check Vertex Uniqueness", GUILayout.Height(24)))
-            {
-                if (MeshUtils.CheckVertexUniqueness(asset.mesh))
-                {
-                    EditorUtility.DisplayDialog("Vertex check",
-                        "Vertices on mesh " + asset.mesh.name + " are unique.", "OK");
-                }
-                else
-                {
-                    EditorUtility.DisplayDialog("Vertex check",
-                        "Vertices on mesh " + asset.mesh.name + " are NOT unique.", "OK");
-                }
-            }
-            
-            if (GUILayout.Button("Open Reimport", GUILayout.Height(32)))
-            {
-                ReimportWindow.InitReimportWindow(asset);
-            }
-            
-            if (GUILayout.Button("Export to FBX", GUILayout.Height(32)))
-            {
-                ExportToFBX(asset.GetMesh(0));
-            }
-            
-            var readable = GUILayout.Toggle(asset.GetMesh(0).isReadable, "IsReadable");
-            if (readable != asset.GetMesh(0).isReadable)
-            {
-                ChangeReadable(readable);
-            }
-            
             Repaint();
         }
 
-        private void ExportToFBX(Mesh p_mesh)
+        void DrawMeshGUI(Mesh p_mesh, int p_index)
         {
-            Type[] types = AppDomain.CurrentDomain.GetAssemblies().First(x => x.FullName == "Unity.Formats.Fbx.Editor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null").GetTypes();
-            Type optionsInterfaceType = types.First(x => x.Name == "IExportOptions");
-            Type optionsType = types.First(x => x.Name == "ExportOptionsSettingsSerializeBase");
+            GUILayout.BeginHorizontal(GUILayout.Height(24));
+            GUILayout.Label(p_mesh.name, GUILayout.Height(24), GUILayout.MaxWidth(200));
+            GUILayout.FlexibleSpace();
             
-            MethodInfo optionsProperty = typeof(ModelExporter).GetProperty("DefaultOptions", BindingFlags.Static | BindingFlags.NonPublic).GetGetMethod(true);
-            object optionsInstance = optionsProperty.Invoke(null, null);
-            
-            FieldInfo exportFormatField = optionsType.GetField("exportFormat", BindingFlags.Instance | BindingFlags.NonPublic);
-            exportFormatField.SetValue(optionsInstance, 1);
-            
-            MethodInfo exportObjectMethod = typeof(ModelExporter).GetMethod("ExportObject", BindingFlags.Static | BindingFlags.NonPublic, Type.DefaultBinder, new Type[] { typeof(string), typeof(Object), optionsInterfaceType }, null);
-
-
-            var filter = new GameObject().AddComponent<MeshFilter>();
-            filter.sharedMesh = Instantiate(p_mesh);
-            var renderer = filter.gameObject.AddComponent<MeshRenderer>();
-            var materials = new List<Material>();
-            for (int i = 0; i < filter.sharedMesh.subMeshCount; i++)
+            if (GUILayout.Button("Reimport", GUILayout.Height(24), GUILayout.Width(70)))
             {
-                materials.Add(new Material(Shader.Find("Standard")));
+                ReimportWindow.InitReimportWindow(asset, p_index);
             }
-
-            renderer.materials = materials.ToArray();
-
-
-            var path = EditorUtility.SaveFilePanel("FBX", Application.dataPath, p_mesh.name, "fbx");
-            if (path != null && path.Length > 0)
+            
+            if (GUILayout.Button("Export", GUILayout.Height(24), GUILayout.Width(60)))
             {
-                exportObjectMethod.Invoke(null, new object[] { path, filter.gameObject, optionsInstance });
+                FBXUtils.ExportToFBX(asset.GetMesh(p_index));
             }
+            
+            var readable = GUILayout.Toggle(p_mesh.isReadable, "Readable", GUILayout.Height(24));
+            if (readable != p_mesh.isReadable)
+            {
+                ChangeReadable(readable);
+            }
+            GUILayout.EndHorizontal();
         }
 
         private void ChangeReadable(bool p_readable)
@@ -160,8 +115,6 @@ namespace VertexColorPainter.Editor
 
         private void OnEnable()
         {
-            Debug.Log("OnEnable");
-            
             GeneratePreviewTexture();
 
             if (_thumbnailTexture == null)
@@ -169,13 +122,11 @@ namespace VertexColorPainter.Editor
                 Thread.Sleep(100);
                 GeneratePreviewTexture();
             }
-            
-            Debug.Log("OnEnable2");
         }
 
         public override Texture2D RenderStaticPreview(string assetPath, Object[] subAssets, int width, int height)
         {
-            Debug.Log("RenderStaticPreview: "+_thumbnailTexture);
+            //Debug.Log("RenderStaticPreview: "+_thumbnailTexture);
 
             return _thumbnailTexture;
         }

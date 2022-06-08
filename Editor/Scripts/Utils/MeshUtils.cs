@@ -3,6 +3,7 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -50,14 +51,18 @@ namespace VertexColorPainter.Editor
 
             var p_colors = new Color[p_mesh.subMeshCount];
 
-            var cachedColors = p_mesh.colors;
+            // This is here purely for old VCP assets new ones will always have color channel
+            if (p_mesh.colors.Length == 0 || p_mesh.colors.Length < p_mesh.vertexCount)
+            {
+                p_mesh.colors = Enumerable.Repeat(Color.white, p_mesh.vertexCount).ToArray();
+            }
             
+            var cachedColors = p_mesh.colors;
+
             for (int i = 0; i < p_colors.Length; i++)
             {
                 SubMeshDescriptor desc = p_mesh.GetSubMesh(i);
                 p_colors[i] = cachedColors[p_mesh.triangles[desc.indexStart]];
-                // Debug.Log(i+" : "+desc.firstVertex+" : "+desc.vertexCount+" : "+desc.baseVertex+" : "+desc.indexStart+" : "+desc.indexCount);
-                // Debug.Log(p_mesh.triangles[desc.indexStart]);
             }
 
             return p_colors;
@@ -111,29 +116,6 @@ namespace VertexColorPainter.Editor
             }
 
             return i;
-        }
-
-        public static bool CheckVertexUniqueness(Mesh p_mesh)
-        {
-            if (p_mesh.subMeshCount == 1)
-                return true;
-            
-            List<int> checkedIndices = new List<int>();
-            var triangles = p_mesh.triangles;
-
-            for (int i = 0; i < p_mesh.subMeshCount; i++)
-            {
-                var desc = p_mesh.GetSubMesh(i);
-                for (int j = 0; j < desc.indexCount; j++)
-                {
-                    var index = triangles[desc.indexStart + j];
-                    if (checkedIndices.Contains(index))
-                        return false;
-                    checkedIndices.Add(index);
-                }
-            }
-
-            return true;
         }
     }
 }

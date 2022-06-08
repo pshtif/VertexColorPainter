@@ -7,19 +7,17 @@ using UnityEngine;
 
 namespace VertexColorPainter.Editor
 {
-    public class VCPEditorWindow : EditorWindow
+    public class VCPSettingsWindow : EditorWindow
     {
-        public VCPEditorCore Core => VCPEditorCore.Instance;
-        
         public GUISkin Skin => (GUISkin)Resources.Load("Skins/VertexColorPainterSkin");
 
         private Vector2 _scrollPosition;
 
-        public static VCPEditorWindow Instance { get; private set; } 
+        public static VCPSettingsWindow Instance { get; private set; } 
         
-        public static VCPEditorWindow InitEditorWindow()
+        public static VCPSettingsWindow InitEditorWindow()
         {
-            Instance = GetWindow<VCPEditorWindow>();
+            Instance = GetWindow<VCPSettingsWindow>();
             Instance.titleContent = new GUIContent("Vertex Color Painter");
             Instance.minSize = new Vector2(200, 400);
 
@@ -41,33 +39,34 @@ namespace VertexColorPainter.Editor
 
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
 
-            EditorGUILayout.LabelField("Vertex Color Painter Editor", style, GUILayout.Height(28));
+            EditorGUILayout.LabelField("Vertex Color Painter Settings", style, GUILayout.Height(28));
             GUILayout.Space(4);
 
             GUI.color = new Color(1, 0.5f, 0);
-            if (GUILayout.Button(Core.Config.enabled ? "DISABLE" : "ENABLE", GUILayout.Height(32)))
+            if (GUILayout.Button(VCPEditorCore.Config.enabled ? "DISABLE" : "ENABLE", GUILayout.Height(32)))
             {
-                Core.Config.enabled = !Core.Config.enabled;
+                VCPEditorCore.Config.enabled = !VCPEditorCore.Config.enabled;
             }
             GUILayout.Space(4);
             GUI.color = Color.white;
 
             EditorGUI.BeginChangeCheck();
             
+            if (VCPEditorCore.CurrentTool != null)
+            {
+                VCPEditorCore.CurrentTool.DrawSettingsGUI();
+                
+                GUILayout.Space(4);
+            }
+
             EditorGUILayout.LabelField("Settings", Skin.GetStyle("settingslabel"), GUILayout.Height(24));
 
-            Core.Config.enableUv0Editing =
-                GUILayout.Toggle(Core.Config.enableUv0Editing, new GUIContent("Enable Uv0 Editing", "Since Uv0 are used for main texture mapping you can disable its editation option here."));
-            
-            Core.Config.enableClosestPaint =
-                GUILayout.Toggle(Core.Config.enableClosestPaint, new GUIContent("Enable Closest Vertex Painting", "If there are no vertices in the range of brush paint closest vertex outside of range."));
-            
-            Core.Config.autoMeshFraming =
-                GUILayout.Toggle(Core.Config.autoMeshFraming, new GUIContent("Automatically Frame Painted Meshes", "Upon enabling painting automatically frame the painted mesh in view."));
+            VCPEditorCore.Config.autoMeshFraming =
+                GUILayout.Toggle(VCPEditorCore.Config.autoMeshFraming, new GUIContent("Automatically Frame Painted Meshes", "Upon enabling painting automatically frame the painted mesh in view."));
             
             if (EditorGUI.EndChangeCheck())
             {
-                EditorUtility.SetDirty(Core.Config);
+                EditorUtility.SetDirty(VCPEditorCore.Config);
             }
 
             EditorGUILayout.EndScrollView();

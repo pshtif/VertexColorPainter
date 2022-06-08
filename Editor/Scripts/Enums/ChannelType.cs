@@ -2,6 +2,9 @@
  *	Created by:  Peter @sHTiF Stefcek
  */
 
+using System;
+using System.Linq;
+
 namespace VertexColorPainter.Editor
 {
     public enum ChannelType

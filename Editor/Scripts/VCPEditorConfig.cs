@@ -39,9 +39,6 @@ namespace VertexColorPainter.Editor
         public bool previousOutlineSetting = false;
 
         [HideInInspector] 
-        public bool enableUv0Editing = false;
-
-        [HideInInspector] 
         public bool overlayRender = true;
 
         [HideInInspector]
